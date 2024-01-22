@@ -1,4 +1,6 @@
 #include "Header.h"
+#include "types.h"
+#include "Camera.h"
 
 #include <iostream>
 #include <string>
@@ -22,6 +24,20 @@ int main()
     finalResult->height = 256;
     int pixelCount = (finalResult->width * finalResult->width);
 
+    for (int y = 0; y < finalResult->width; y++)
+    {
+        for (int x = 0; x < finalResult->height; x++) 
+        {
+            Ray* curRay = new Ray;
+            //camera.getRay(x, y);
+            //hitSUrface, t = s.intersect(curRay, 0, +inf)
+            //if hitSurface is not null
+            //image.set(x, y, white);
+        }
+    }
+
+
+    //Edit the image
     for (int i = 0; i < pixelCount; i++)
     {
         Header::Pixel* currentPixel = new Header::Pixel;
