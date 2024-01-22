@@ -9,6 +9,7 @@ struct PerspectiveCam
     VectorThree v;
     VectorThree w;
     float projectionDistance;
+    Ray getRay();
     vector<Ray*> cameraRays;
 
 };
