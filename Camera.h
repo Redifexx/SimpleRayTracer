@@ -5,11 +5,12 @@ using namespace std;
 
 struct PerspectiveCam
 {
+    VectorThree e;
     VectorThree u;
     VectorThree v;
     VectorThree w;
     float projectionDistance;
-    Ray getRay();
-    vector<Ray*> cameraRays;
+    Ray* getRay(int x, int y);
+    //vector<Ray*> cameraRays;
 
 };

@@ -24,12 +24,14 @@ int main()
     finalResult->height = 256;
     int pixelCount = (finalResult->width * finalResult->width);
 
+    //Set Up Camera
+    PerspectiveCam camera;
     for (int y = 0; y < finalResult->width; y++)
     {
         for (int x = 0; x < finalResult->height; x++) 
         {
-            Ray* curRay = new Ray;
-            //camera.getRay(x, y);
+            Ray* curRay = camera.getRay(x, y);
+            
             //hitSUrface, t = s.intersect(curRay, 0, +inf)
             //if hitSurface is not null
             //image.set(x, y, white);
@@ -42,15 +44,29 @@ int main()
     {
         Header::Pixel* currentPixel = new Header::Pixel;
 
-        //Blue
-        currentPixel->blue = (unsigned char) 174;
+    
+        if (i == ((pixelCount/2) + 128))
+        {
+            //Blue
+            currentPixel->blue = (unsigned char) 255;
 
-        //Green
-        currentPixel->green = (unsigned char) 209;
+            //Green
+            currentPixel->green = (unsigned char) 255;
 
-        //Red
-        currentPixel->red = (unsigned char) 53;
+            //Red
+            currentPixel->red = (unsigned char) 255;
+        }
+        else
+        {
+            //Blue
+            currentPixel->blue = (unsigned char) 0;
 
+            //Green
+            currentPixel->green = (unsigned char) 0;
+
+            //Red
+            currentPixel->red = (unsigned char) 0;
+        }
         finalResult->pixels.push_back(currentPixel);
     }
 
