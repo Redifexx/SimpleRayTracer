@@ -28,13 +28,13 @@ int main()
 
     //Set Up Camera
     PerspectiveCam camera;
-
+    UnitSphere sphere;
     for (int y = 0; y < finalResult->width; y++)
     {
         for (int x = 0; x < finalResult->height; x++) 
         {
             Ray* curRay = camera.getRay(x, y);
-            //float t = (DotProduct(-curRay->direction, ))
+            float t = ((DotProduct(curRay->direction, sphere.position)) + sqrt())
             //hitSUrface, t = s.intersect(curRay, 0, +inf)
             //if hitSurface is not null
             //image.set(x, y, white);
