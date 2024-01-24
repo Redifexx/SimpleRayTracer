@@ -5,8 +5,8 @@ void scaleVectors(float scalar, VectorThree& a);
 
 PerspectiveCam::PerspectiveCam()
 {
-    e.x = 0;
-    e.y = 0;
+    e.x = 0.5;
+    e.y = 0.5;
     e.z = 0;
 
     u.x = 1;
@@ -28,6 +28,7 @@ Ray* PerspectiveCam::getRay(int x, int y)
 {
     x += 1;
     y += 1;
+
 
     Ray* curRay = new Ray;
     curRay->origin.x = this->e.x;

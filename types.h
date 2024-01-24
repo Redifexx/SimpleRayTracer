@@ -15,3 +15,8 @@ struct Ray
     VectorThree origin;
     VectorThree direction;
 };
+
+struct UnitSphere
+{
+    VectorThree position;
+}

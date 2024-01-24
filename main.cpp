@@ -2,12 +2,14 @@
 #include "types.h"
 #include "Camera.h"
 
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <vector>
 
 void FileWrite(string fileName, Header* currentImage);
+float DotProduct(VectorThree a, VectorThree b);
 
 int main()
 {
@@ -26,12 +28,13 @@ int main()
 
     //Set Up Camera
     PerspectiveCam camera;
+
     for (int y = 0; y < finalResult->width; y++)
     {
         for (int x = 0; x < finalResult->height; x++) 
         {
             Ray* curRay = camera.getRay(x, y);
-            
+            //float t = (DotProduct(-curRay->direction, ))
             //hitSUrface, t = s.intersect(curRay, 0, +inf)
             //if hitSurface is not null
             //image.set(x, y, white);
@@ -147,4 +150,13 @@ void FileWrite(string fileName, Header* currentImage)
         }
         imageFile.close();
     }
+}
+
+float DotProduct(VectorThree a, VectorThree b);
+{
+    float curFloat = 0;
+    curFloat += (a.x + b.x);
+    curFloat += (a.y + b.y);
+    curFloat += (a.z + b.z);
+    return curFloat;
 }
