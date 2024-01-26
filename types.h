@@ -19,4 +19,4 @@ struct Ray
 struct UnitSphere
 {
     VectorThree position;
-}
+};

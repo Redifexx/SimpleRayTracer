@@ -34,7 +34,12 @@ int main()
         for (int x = 0; x < finalResult->height; x++) 
         {
             Ray* curRay = camera.getRay(x, y);
-            float t = ((DotProduct(curRay->direction, sphere.position)) + sqrt())
+            VectorThree negDirection;
+            negDirection.x = curRay->direction.x;
+            negDirection.y = curRay->direction.y;
+            negDirection.z = curRay->direction.z;
+            float t = ((DotProduct(negDirection, sphere.position)) + sqrt(pow((DotProduct(curRay->direction, sphere.position)), 2) - (DotProduct(sphere.position, sphere.position) + 1)));
+            cout << t;
             //hitSUrface, t = s.intersect(curRay, 0, +inf)
             //if hitSurface is not null
             //image.set(x, y, white);
@@ -152,7 +157,7 @@ void FileWrite(string fileName, Header* currentImage)
     }
 }
 
-float DotProduct(VectorThree a, VectorThree b);
+float DotProduct(VectorThree a, VectorThree b)
 {
     float curFloat = 0;
     curFloat += (a.x + b.x);
