@@ -3,19 +3,17 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
-            "command": "C:\\mingw64\\bin\\g++.exe",
+            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
             "args": [
-                "-I",
-                "C:\\glfw-3.3.8.bin.WIN64\\include",
-                "-I",
-                "C:\\glew-2.1.0\\include",
-                "-L",
-                "C:\\glew-2.1.0\\lib\\Release\\x64",
-                "-L",
-                "C:\\glfw-3.3.8.bin.WIN64\\lib-mingw-w64",
+                "-I${workspaceFolder}\\include",
+                "-L${workspaceFolder}\\lib",
+                "${workspaceFolder}\\src\\simpleTexture.cpp",
+                "-lglew32s",
                 "-lglfw3dll",
-                "-lglew32",
                 "-lopengl32",
+                "-lgdi32",
+                "-o",
+                "${workspaceFolder}\\bin\\main.exe"
             ],
             "options": {
                 "cwd": "${fileDirname}"
