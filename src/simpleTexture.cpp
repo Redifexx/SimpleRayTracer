@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include "render.cpp"
 
 
 #include <iostream>
@@ -53,7 +54,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Display RGB Array", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "RTX ON", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -160,14 +161,24 @@ int main()
     const int width = 128; // keep it in powers of 2!
     const int height = 128; // keep it in powers of 2!
     unsigned char image[width * height * 3];
+    std::vector<std::vector<glm::uvec3>>& output = renderOutput(width, height);
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
         {
             int idx = (i * width + j) * 3;
-            image[idx] = (unsigned char)(255 * i * j / height / width); //((i+j) % 2) * 255;
-            image[idx + 1] = (unsigned char)(255 * i * j / height / width);
-            image[idx + 2] = 0;
+            unsigned int r = output.at(i).at(j).x;
+            //std::cout << r << " ";
+            unsigned int g = output.at(i).at(j).y;
+            //std::cout << g << " ";
+            unsigned int b = output.at(i).at(j).z;
+            //std::cout << b << std::endl;
+            //image[idx] = (unsigned char)(r * i * j / height / width); //((i+j) % 2) * 255;
+            //image[idx + 1] = (unsigned char)(g * i * j / height / width);
+            //image[idx + 2] = b;
+            image[idx] = (unsigned char)(r); //((i+j) % 2) * 255;
+            image[idx + 1] = (unsigned char)(g);
+            image[idx + 2] = b;
         }
     }
 
