@@ -7,7 +7,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     std::vector<std::vector<glm::uvec3>>* render = new std::vector<std::vector<glm::uvec3>>(screenWidth_, std::vector<glm::uvec3>(screenHeight_));
     PerspectiveCam* cam = new PerspectiveCam(screenWidth_, screenHeight_);
     Sphere* sphere = new Sphere();
-    sphere->position = glm::vec3(0.0, 0.0, -30.0);
+    sphere->position = glm::vec3(0.0, 0.0, -20.0);
     for (int i = 0; i < screenWidth_; i++)
     {
         for (int j = 0; j < screenHeight_; j++)
