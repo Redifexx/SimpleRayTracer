@@ -20,18 +20,18 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     blue->baseColor = glm::uvec3(0, 0, 255);
 
     //Spheres
-    Sphere* redSphere = new Sphere();
+    Sphere* redSphere = new Sphere(red);
     redSphere->position = glm::vec3(-1.0, 1.0, -20.0);
     //redSphere->baseColor = glm::uvec3(255, 0, 0);
     sphereList.push_back(redSphere);
 
-    Sphere* greenSphere = new Sphere();
-    greenSphere->position = glm::vec3(1.0, 0.5, -7.0);
-    greenSphere->radius = 0.5f;
+    Sphere* greenSphere = new Sphere(green);
+    greenSphere->position = glm::vec3(1.0, 5, -30.0);
+    greenSphere->radius = 1.0f;
     //greenSphere->baseColor = glm::uvec3(0, 255, 0);
     sphereList.push_back(greenSphere);
 
-    Sphere* blueSphere = new Sphere();
+    Sphere* blueSphere = new Sphere(blue);
     blueSphere->position = glm::vec3(1.0, -0.7, -15.0);
     blueSphere->radius = 1.0f;
     //blueSphere->baseColor = glm::uvec3(0, 0, 255);
@@ -54,7 +54,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
                 glm::vec3 intersectionPoint;
                 if (curRay->raySphereIntersection(sphereList[obj], intersectionPoint))
                 {
-                    (*render)[i][j] = green->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), light);
+                    (*render)[i][j] = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), light);
                 }
             }
         }

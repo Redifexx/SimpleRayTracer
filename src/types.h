@@ -75,6 +75,12 @@ struct Sphere
         radius = 1.0;
         material = new Material();
     }
+    Sphere(Material* mat)
+    {
+        position = glm::vec3(0.0f, 0.0f, 0.0f);
+        radius = 1.0;
+        material = mat;
+    }
     ~Sphere()
     {
         delete material;
