@@ -1,4 +1,4 @@
-#include "object.h"
+#include "types.h"
 
 struct PerspectiveCam
 {
@@ -17,7 +17,7 @@ struct PerspectiveCam
         camBasisV = glm::vec3(0.0f, 0.5f, 0.0f);
         camBasisW = glm::vec3(0.0f, 0.0f, 1.0f);
         persectiveDistance = 1.0;
-        maxRayLength = 2000;
+        maxRayLength = 3000;
         screenWidth = screenWidth_;
         screenHeight = screenHeight_;
     }
