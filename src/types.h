@@ -1,5 +1,7 @@
 #include <GLM/glm.hpp>
 #include <cmath>
+#include <math.h>
+#define _USE_MATH_DEFINES
 
 class Light 
 {
