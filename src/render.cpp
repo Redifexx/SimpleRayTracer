@@ -21,7 +21,8 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
 
     //Spheres
     Sphere* redSphere = new Sphere(red);
-    redSphere->position = glm::vec3(-1.0, 1.0, -20.0);
+    redSphere->position = glm::vec3(0.0, -1.0, 8.0);
+    redSphere->radius = 1.0f;
     //redSphere->baseColor = glm::uvec3(255, 0, 0);
     sphereList.push_back(redSphere);
 
@@ -29,18 +30,22 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     greenSphere->position = glm::vec3(1.0, 5, -30.0);
     greenSphere->radius = 1.0f;
     //greenSphere->baseColor = glm::uvec3(0, 255, 0);
-    sphereList.push_back(greenSphere);
+    //sphereList.push_back(greenSphere);
 
     Sphere* blueSphere = new Sphere(blue);
     blueSphere->position = glm::vec3(1.0, -0.7, -15.0);
     blueSphere->radius = 1.0f;
     //blueSphere->baseColor = glm::uvec3(0, 0, 255);
-    sphereList.push_back(blueSphere);
+    //sphereList.push_back(blueSphere);
 
     //Light
 
     DirectionalLight* light = new DirectionalLight();
     light->strength = 2.0f;
+
+    cam->camRotate(90.0f, 90.0f, 45.0f);
+    //cam->setFOV(50.0f);
+    std::cout << cam->calculateFOV() << std::endl;
 
     for (int i = 0; i < screenWidth_; i++)
     {
@@ -52,7 +57,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
             {
                 //std::cout << "TEST" << std::endl;
                 glm::vec3 intersectionPoint;
-                if (curRay->raySphereIntersection(sphereList[obj], intersectionPoint))
+                if (curRay->raySphereIntersection(sphereList[obj], intersectionPoint, cam->viewMatrix))
                 {
                     (*render)[i][j] = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), light);
                 }

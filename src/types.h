@@ -11,7 +11,7 @@ class Light
     Light()
     {
         position = glm::vec3(0.0f, 0.0f, 0.0f);
-        direction = glm::vec3(0.5f, -1.0f, 0.5f);
+        direction = glm::vec3(0.0f, -1.0f, 0.0f);
         strength = 1.0f;
         baseColor = glm::uvec3(255, 255, 255);
     }
@@ -46,7 +46,7 @@ struct Material
     glm::uvec3 shaderPixel(glm::vec3 surfaceNormal, Light* light)
     {
         //Diffuse
-        float diffuseEmission = (diffuseCoefficient) * (light->strength) * glm::max(0.0f, (glm::dot(surfaceNormal, light->getDirection())));
+        float diffuseEmission = (diffuseCoefficient) * (light->strength) * glm::max(0.0f, (glm::dot(surfaceNormal, -light->getDirection())));
         glm::uvec3 diffuseColor = glm::uvec3(baseColor.x * diffuseEmission, baseColor.y * diffuseEmission, baseColor.z * diffuseEmission);
         glm::uvec3 ambientEmission = glm::uvec3(baseColor.x * ambientCoefficient, baseColor.y * ambientCoefficient, baseColor.z * ambientCoefficient);
         //std::cout << diffuseEmission << std::endl;
@@ -102,17 +102,23 @@ struct Ray
     }
 
     
-    bool raySphereIntersection(Sphere* sphere, glm::vec3& intersectPoint)
+    bool raySphereIntersection(Sphere* sphere, glm::vec3& intersectPoint, glm::mat4 camViewMatrix)
     {
+        glm::mat4 inverseViewMatrix = glm::inverse(camViewMatrix);
+        glm::vec3 originWorld = glm::vec3(inverseViewMatrix * glm::vec4(this->origin, 1.0f));
+        glm::vec3 directionWorld = glm::vec3(inverseViewMatrix * glm::vec4(this->direction, 0.0));
+        glm::vec3 oc = originWorld - sphere->position;
         bool sphereIntersection = false;
-        float a = (glm::dot(this->direction, this->direction));
-        float b = (glm::dot((this->direction * 2.0f), (this->origin - sphere->position)));
-        float c = (glm::dot((this->origin - sphere->position), (this->origin - sphere->position))) - std::pow(sphere->radius, 2);
+        float a = (glm::dot(directionWorld, directionWorld));
+        float b = (2.0f * glm::dot(oc, directionWorld));
+        float c = (glm::dot(oc, oc)) - std::pow(sphere->radius, 2);
         float discriminant = (std::pow(b, 2) - 4*a*c);
         if (discriminant > 0.0)
         {
             float t1 = ((-b) - std::sqrt(discriminant)) / 2*a;
-            intersectPoint = this->origin + t1 * this->direction;
+            float t2 = ((-b) + std::sqrt(discriminant)) / 2*a;
+            float t = (t1 < t2) ? t1 : t2;
+            intersectPoint = originWorld + t * directionWorld;
             return true;
         }
         return false;
