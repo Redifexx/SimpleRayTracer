@@ -18,12 +18,12 @@ struct Camera
 
     Camera(int screenWidth_, int screenHeight_)
     {
-        camPos = glm::vec3(0.0f, 0.0f, 0.0f);
+        camPos = glm::vec3(0.0f, 0.0f, -3.0f);
         camBasisU = glm::vec3(1.0f, 0.0f, 0.0f);
         camBasisV = glm::vec3(0.0f, 1.0f, 0.0f);
         camBasisW = glm::vec3(0.0f, 0.0f, 1.0f);
         orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-        perspectiveDistance = 1.0f;
+        perspectiveDistance = 0.5f;
         maxRayLength = 1000;
         screenWidth = screenWidth_;
         screenHeight = screenHeight_;

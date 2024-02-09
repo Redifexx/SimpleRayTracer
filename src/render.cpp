@@ -22,7 +22,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
 
     //Spheres
     Sphere* redSphere = new Sphere(red);
-    redSphere->position = glm::vec3(0.0, 0.0, -5.0);
+    redSphere->position = glm::vec3(-1.0, 0.0, -5.0);
     redSphere->radius = 0.5f;
     //redSphere->baseColor = glm::uvec3(255, 0, 0);
     sphereList.push_back(redSphere);
@@ -34,7 +34,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     sphereList.push_back(greenSphere);
 
     Sphere* blueSphere = new Sphere(blue);
-    blueSphere->position = glm::vec3(1.0, -0.7, -15.0);
+    blueSphere->position = glm::vec3(5.0, -0.7, -15.0);
     blueSphere->radius = 1.0f;
     //blueSphere->baseColor = glm::uvec3(0, 0, 255);
     sphereList.push_back(blueSphere);
@@ -43,9 +43,9 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
 
     DirectionalLight* light = new DirectionalLight();
     light->strength = 2.0f;
-    light->direction = (glm::vec3(0.0f, -1.0f, 0.0f));
+    light->direction = (glm::vec3(1.0f, -0.8f, -0.5f));
 
-    cam->camRotate(0.0f, 0.0f, 90.0f);
+    cam->camRotate(0.0f, 0.0f, -90.0f);
     std::cout << cam->calculateFOV() << std::endl;
 
 
@@ -53,7 +53,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     {
         for (int j = 0; j < screenHeight_; j++)
         {
-            (*render)[i][j] = glm::uvec3(50, 50, 100);
+            (*render)[i][j] = glm::uvec3(50, 50, 50);
             Ray* curRay = cam->getRay(i, j);
             for (int obj = 0; obj < sphereList.size(); obj++)
             {
