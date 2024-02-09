@@ -11,8 +11,8 @@ void framebuffer_size_callback(GLFWwindow * window, int width, int height);
 void processInput(GLFWwindow* window);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 800;
+const unsigned int SCR_WIDTH = 1024;
+const unsigned int SCR_HEIGHT = 1024;
 
 
 const char* vertexShaderSource = "#version 330 core\n"

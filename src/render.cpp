@@ -12,13 +12,16 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
 
     //Materials
     Material* red = new Material();
-    red->baseColor = glm::uvec3(255, 0, 0);
+    red->diffuseColor = rgbToFloat(glm::uvec3(255, 0, 0));
+    red->ambientColor = rgbToFloat(glm::uvec3(255, 0, 0));
 
     Material* green = new Material();
-    green->baseColor = glm::uvec3(0, 255, 0);
+    green->diffuseColor = rgbToFloat(glm::uvec3(0, 255, 0));
+    green->ambientColor = rgbToFloat(glm::uvec3(0, 255, 0));
 
     Material* blue = new Material();
-    blue->baseColor = glm::uvec3(0, 0, 255);
+    blue->diffuseColor = rgbToFloat(glm::uvec3(0, 0, 255));
+    blue->ambientColor = rgbToFloat(glm::uvec3(0, 0, 255));
 
     //Spheres
     Sphere* redSphere = new Sphere(red);
@@ -34,7 +37,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     sphereList.push_back(greenSphere);
 
     Sphere* blueSphere = new Sphere(blue);
-    blueSphere->position = glm::vec3(5.0, -0.7, -15.0);
+    blueSphere->position = glm::vec3(3.0, 2.0, -7.0);
     blueSphere->radius = 1.0f;
     //blueSphere->baseColor = glm::uvec3(0, 0, 255);
     sphereList.push_back(blueSphere);
@@ -42,8 +45,8 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     //Light
 
     DirectionalLight* light = new DirectionalLight();
-    light->strength = 2.0f;
-    light->direction = (glm::vec3(1.0f, -0.8f, -0.5f));
+    light->strength = 1.0f;
+    light->direction = (glm::vec3(0.0f, 0.5f, 1.0f));
 
     cam->camRotate(0.0f, 0.0f, -90.0f);
     std::cout << cam->calculateFOV() << std::endl;
@@ -60,7 +63,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
                 glm::vec3 intersectionPoint;
                 if (curRay->raySphereIntersection(sphereList[obj], intersectionPoint, cam->viewMatrix))
                 {
-                    (*render)[i][j] = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), light);
+                    (*render)[i][j] = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), light, curRay->direction);
                 }
             }
         }
