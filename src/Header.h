@@ -15,15 +15,14 @@ struct Header
     short width;
     short height;
     char bitsPerPixel;
-    char imageDescriptor;
-    
+    char imageDescriptor; 
     struct Pixel
     {
         unsigned char red;
         unsigned char green;
         unsigned char blue;
     };
-    vector<Pixel*> pixels;
+    vector<Header::Pixel*> pixels;
     Header();
     ~Header();
 };

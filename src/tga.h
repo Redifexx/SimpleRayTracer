@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 
 void FileWrite(string fileName, Header* currentImage);
 
@@ -14,40 +15,38 @@ struct ImageFile
 
     ImageFile (int width_, int height_)
     {
-        std::string fileName = "output/result.tga";
-        Header* finalResult = new Header();
+        finalResult = new Header();
         width = width_;
         height = height_;
+        fileName = "result.tga";
+        finalResult->width = width_;
+        finalResult->height = height_;
     }
     ~ImageFile ()
     {
         delete finalResult;
     }
 
-    void addPixel(unsigned int r, unsigned int g, unsigned int b)
+    void addPixel(int r, int g, int b)
     {
-        std::cout << "TEST1" << std::endl;
         Header::Pixel* currentPixel = new Header::Pixel();
-         std::cout << "TEST2" << std::endl;
-        currentPixel->blue = (unsigned char) b;
-         std::cout << "TEST3" << std::endl;
+        currentPixel->blue = b;
         //Green
-        currentPixel->green = (unsigned char) g;
-        std::cout << "TEST4" << std::endl;
-        
+        currentPixel->green = g;
         //Red
-        currentPixel->red = (unsigned char) r;
-         std::cout << "TEST5" << std::endl;
+        currentPixel->red = r;
+        
         finalResult->pixels.push_back(currentPixel);
-        std::cout << "Pixel Added!: " << finalResult->pixels.size() << std::endl;
+        //std::cout << "Pixel Added!: " << pixels.size() << std::endl;
     }
 
     void fileWrite()
     {
         ofstream imageFile(fileName, ios_base::out | ios_base::binary);
-
+        std::cout << "TEST1 " << imageFile.is_open() << " " << fileName << std::endl;
         if (imageFile.is_open())
         {
+            std::cout << "TEST" << std::endl;
             char idLength_ = finalResult->idLength;
             imageFile.write(&idLength_, sizeof(idLength_));
 
@@ -87,7 +86,7 @@ struct ImageFile
             std::cout << finalResult->pixels.size() << std::endl;
             for (int i = 0; i < finalResult->pixels.size(); i++)
             {
-                Header::Pixel* pixels_ = finalResult->pixels[i];
+                Header::Pixel* pixels_ = finalResult->pixels.at(i);
                 unsigned char blue_ = pixels_->blue;
                 imageFile.write((char*)&blue_, sizeof(blue_));
 
@@ -98,6 +97,10 @@ struct ImageFile
                 imageFile.write((char*)&red_, sizeof(red_));
             }
             imageFile.close();
+        } else
+        {
+            std::perror("Error opening file");
+            std::cout << "Working Directory: " << std::filesystem::current_path() << std::endl;
         }
     }
 };
