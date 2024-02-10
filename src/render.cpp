@@ -1,7 +1,9 @@
 #include "Camera.h"
+#include "TGA.h"
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 
 
 std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenHeight_) 
@@ -49,8 +51,10 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     light->direction = (glm::vec3(0.0f, 0.5f, 1.0f));
 
     cam->camRotate(0.0f, 0.0f, -90.0f);
-    std::cout << cam->calculateFOV() << std::endl;
+    //std::cout << cam->calculateFOV() << std::endl;
 
+    //Output TGA
+    ImageFile* imageFile = new ImageFile(screenWidth_, screenHeight_);
 
     for (int i = 0; i < screenWidth_; i++)
     {
@@ -63,10 +67,13 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
                 glm::vec3 intersectionPoint;
                 if (curRay->raySphereIntersection(sphereList[obj], intersectionPoint, cam->viewMatrix))
                 {
-                    (*render)[i][j] = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), light, curRay->direction);
+                    glm::uvec3 result = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), light, curRay->direction);
+                    (*render)[i][j] = result;
+                    imageFile->addPixel(result.x, result.y, result.z);
                 }
             }
         }
     }
+    imageFile->fileWrite();
     return *render;
 };
