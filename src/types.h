@@ -5,6 +5,7 @@
 #include <GLM/glm.hpp>
 #include <cmath>
 #include <math.h>
+#include <iostream>
 #define _USE_MATH_DEFINES
 
 struct Light;
@@ -40,6 +41,24 @@ glm::uvec3 floatToRGB(glm::vec3 RGB)
 }
 
 
+glm::vec3 vectorToEuler(glm::vec3 direction)
+{
+    glm::vec3 angles;
+    angles.y = atan2(direction.y, direction.x);
+    angles.x = atan2(direction.z, sqrt(direction.x * direction.x + direction.y * direction.y));
+    
+    return angles;
+}
+
+glm::vec3 eulerToVector(glm::vec3 angles) //Asssumiong Radisans
+{
+    glm::vec3 dirVector;
+    dirVector.x = cos(angles.y) * cos(angles.x);
+    dirVector.y = sin(angles.y) * cos(angles.x);
+    dirVector.z = sin(angles.x);
+    std::cout << dirVector.x << " " << dirVector.y << " " << dirVector.z << std::endl;
+    return glm::normalize(dirVector);
+}
 
 struct Light 
 {
@@ -52,15 +71,37 @@ struct Light
     {
         position = glm::vec3(0.0f, 0.0f, 0.0f);
         direction = glm::vec3(0.0f, 0.0f, 0.0f);
-        strength = 1.0f;
+        strength = 0.1f;
         baseColor = glm::vec3(1.0f, 1.0f, 1.0f);
     }
+    virtual void lightRotate(glm::vec3 rotation) = 0;
     virtual glm::vec3 getDirection() = 0;
 };
 
 struct DirectionalLight : public Light
 {
-    glm::vec3 getDirection() override { return this->direction; }
+    glm::vec3 getDirection() override
+    {
+        return glm::normalize(this->direction);
+    }
+
+    void lightRotate(glm::vec3 rotation) override
+    {
+        this->direction = eulerToVector(rotation);
+    }
+};
+
+struct PointLight : public Light
+{
+    glm::vec3 getDirection() override
+    {
+        return glm::normalize(this->direction);
+    }
+
+    void lightRotate(glm::vec3 rotation) override
+    {
+        this->direction = eulerToVector(rotation);
+    }
 };
 
 struct Material
@@ -77,17 +118,18 @@ struct Material
     {
         diffuseColor = glm::vec3(1.0f, 1.0f, 1.0f);
         ambientColor = diffuseColor;
-        specularColor = diffuseColor;
-        diffuseIntensity = 1.0f;
+        specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        diffuseIntensity = 0.5f;
         ambientIntensity = 0.15f;
-        specularIntensity = 1.0f;
-        phongExponent = 100.0f;
+        specularIntensity = 0.5f;
+        phongExponent = 8.0f;
     }
 
     glm::uvec3 shaderPixel(glm::vec3 surfaceNormal, Light* light, glm::vec3 camVector)
-    {
-        glm::vec3 minClamp(0.0f, 0.0f, 0.0f);
-        glm::vec3 maxClamp(1.0f, 1.0f, 1.0f);
+    {;
+        surfaceNormal = glm::normalize(surfaceNormal);
+        glm::vec3 lightVector = -light->getDirection();
+
         //Ambient
         glm::vec3 lightAmbient = 
         (
@@ -95,7 +137,7 @@ struct Material
         );
 
         //Diffuse
-        float diffuseMultipliers = (diffuseIntensity) * (light->strength) * glm::max(0.0f, (glm::dot(surfaceNormal, light->getDirection())));
+        float diffuseMultipliers = (diffuseIntensity) * (light->strength) * glm::max(0.0f, (glm::dot(surfaceNormal, lightVector)));
         glm::uvec3 diffuseVectors = 
         (
             (glm::uvec3(diffuseColor.x, diffuseColor.y, diffuseColor.z)
@@ -111,9 +153,11 @@ struct Material
 
         //Specular
         glm::vec3 eyeVector = glm::normalize(-camVector);
-        glm::vec3 hVector = (eyeVector + glm::normalize(light->getDirection())) / glm::length(eyeVector + glm::normalize(light->getDirection()));
+        glm::vec3 eyePlusLight = (eyeVector + lightVector);
+        glm::vec3 hVector = glm::normalize(eyePlusLight / glm::length(eyePlusLight));
 
-        float specularMultipliers = (specularIntensity) * (light->strength) * std::pow(glm::max(0.0f, (glm::dot(eyeVector, hVector))), phongExponent);
+        float specularMultipliers = (specularIntensity) * (light->strength) * std::pow(glm::max(0.0f, (glm::dot(surfaceNormal, hVector))), phongExponent);
+
 
         glm::uvec3 specularVectors = 
         (
@@ -122,31 +166,25 @@ struct Material
             glm::uvec3(light->baseColor.x, light->baseColor.y, light->baseColor.z))
         );
 
+
         glm::vec3 lightSpecular =
         (
-            glm::vec3(specularColor.x * specularMultipliers, specularColor.x * specularMultipliers, specularColor.x * specularMultipliers)
+            glm::vec3(specularVectors.x * specularMultipliers, specularVectors.y * specularMultipliers, specularVectors.z * specularMultipliers)
         );
 
         
-
-
-        //Diffuse
-        //float diffuseEmission = (diffuseCoefficient) * (light->strength) * glm::max(0.0f, (glm::dot(surfaceNormal, light->getDirection())));
-        //glm::uvec3 diffuseColor = glm::uvec3(baseColor.x * diffuseEmission, baseColor.y * diffuseEmission, baseColor.z * diffuseEmission);
-        //glm::uvec3 ambientEmission = glm::uvec3(baseColor.x * ambientCoefficient, baseColor.y * ambientCoefficient, baseColor.z * ambientCoefficient);
-        //std::cout << diffuseEmission << std::endl;
+        //glm::vec3 finalColor = lightSpecular;
         glm::vec3 finalColor = lightDiffuse + lightAmbient + lightSpecular;
         
-        //glm::uvec3 minClamp(0, 0, 0);
-        //glm::uvec3 maxClamp(255, 255, 255);
         glm::vec3 clampedEmission 
         (
-            glm::clamp(finalColor.x, minClamp.x, maxClamp.x),
-            glm::clamp(finalColor.y, minClamp.y, maxClamp.y),
-            glm::clamp(finalColor.z, minClamp.z, maxClamp.z)
+            glm::clamp(finalColor.x, 0.0f, 1.0f),
+            glm::clamp(finalColor.y, 0.0f, 1.0f),
+            glm::clamp(finalColor.z, 0.0f, 1.0f)
         );
         //return finalColor;
         return floatToRGB(clampedEmission);
+        //return floatToRGB(finalColor);
     }
 };
 
@@ -173,8 +211,8 @@ struct Sphere
     }
     glm::vec3 surfaceNormal(glm::vec3 intersectionPoint)
     {
-        return (intersectionPoint - this->position) / this->radius;
-        //return 2.0f * (intersectionPoint - this->position);
+        //return (intersectionPoint - this->position) / this->radius;
+        return 2.0f * (intersectionPoint - this->position);
     }
 };
 

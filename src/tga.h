@@ -21,13 +21,18 @@ struct ImageFile
         fileName = "result.tga";
         finalResult->width = width_;
         finalResult->height = height_;
+        finalResult->pixels.resize(height);
+        for (int i = 0; i < height_; i++)
+        {
+            finalResult->pixels[i].resize(width);
+        }
     }
     ~ImageFile ()
     {
         delete finalResult;
     }
 
-    void addPixel(int r, int g, int b)
+    void addPixel(int i_, int j_, int r, int g, int b)
     {
         Header::Pixel* currentPixel = new Header::Pixel();
         currentPixel->blue = b;
@@ -36,8 +41,18 @@ struct ImageFile
         //Red
         currentPixel->red = r;
         
-        finalResult->pixels.push_back(currentPixel);
-        //std::cout << "Pixel Added!: " << pixels.size() << std::endl;
+        //std::cout << "TEST " << finalResult->pixels.size() << std::endl;
+        finalResult->pixels.at(j_).at(i_) = currentPixel;
+        /*
+        if (!finalResult->pixels.at(j_).at(i_) || (finalResult->pixels.at(j_).at(i_) == nullptr))
+        {
+            finalResult->pixels.at(j_).push_back(currentPixel);
+        } else
+        {
+            finalResult->pixels.at(j_).at(i_) = currentPixel;
+        }*/
+
+        //std::cout << "Pixel Added!: " << finalResult->pixels.size() << " " << finalResult->pixels[j_].size() << std::endl;
     }
 
     void fileWrite()
@@ -82,7 +97,7 @@ struct ImageFile
 
             char imageDescriptor_ = finalResult->imageDescriptor;
             imageFile.write(&imageDescriptor_, sizeof(imageDescriptor_));
-
+            /*
             std::cout << finalResult->pixels.size() << std::endl;
             for (int i = 0; i < finalResult->pixels.size(); i++)
             {
@@ -95,6 +110,24 @@ struct ImageFile
 
                 unsigned char red_ = pixels_->red;
                 imageFile.write((char*)&red_, sizeof(red_));
+            }*/
+            std::cout << finalResult->pixels.size() << std::endl;
+            std::cout << finalResult->pixels.at(finalResult->pixels.size() - 1).size() << std::endl;
+
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++ )
+                {
+                    Header::Pixel* pixels_ = finalResult->pixels.at(j).at(i);
+                    unsigned char blue_ = pixels_->blue;
+                    imageFile.write((char*)&blue_, sizeof(blue_));
+
+                    unsigned char green_ = pixels_->green;
+                    imageFile.write((char*)&green_, sizeof(green_));
+
+                    unsigned char red_ = pixels_->red;
+                    imageFile.write((char*)&red_, sizeof(red_));
+                }
             }
             imageFile.close();
         } else

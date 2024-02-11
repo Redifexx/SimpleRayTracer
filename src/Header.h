@@ -22,7 +22,7 @@ struct Header
         unsigned char green;
         unsigned char blue;
     };
-    vector<Header::Pixel*> pixels;
+    vector<vector<Header::Pixel*>> pixels;
     Header();
     ~Header();
 };
@@ -47,6 +47,6 @@ Header::~Header()
 {
     for(int i = 0; i < pixels.size(); i++)
     {
-        delete pixels.at(i);
+        //delete pixels.at(i);
     }
 };

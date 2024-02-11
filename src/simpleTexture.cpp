@@ -158,8 +158,8 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // Create the image (RGB Array) to be displayed
-    const int width = 128; // keep it in powers of 2!
-    const int height = 128; // keep it in powers of 2!
+    const int width = 512; // keep it in powers of 2!
+    const int height = 512; // keep it in powers of 2!
     unsigned char image[width * height * 3];
     std::vector<std::vector<glm::uvec3>>& output = renderOutput(width, height);
     for (int i = 0; i < height; i++)
@@ -225,9 +225,6 @@ int main()
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();

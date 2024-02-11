@@ -25,33 +25,41 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     blue->diffuseColor = rgbToFloat(glm::uvec3(0, 0, 255));
     blue->ambientColor = rgbToFloat(glm::uvec3(0, 0, 255));
 
+    Material* white = new Material();
+
     //Spheres
     Sphere* redSphere = new Sphere(red);
-    redSphere->position = glm::vec3(-1.0, 0.0, -5.0);
-    redSphere->radius = 0.5f;
+    redSphere->position = glm::vec3(-3.0, 3.0, -15.0);
+    redSphere->radius = 1.0f;
     //redSphere->baseColor = glm::uvec3(255, 0, 0);
     sphereList.push_back(redSphere);
 
     Sphere* greenSphere = new Sphere(green);
-    greenSphere->position = glm::vec3(1.0, 5, -30.0);
+    greenSphere->position = glm::vec3(3.0, 3.0, -15.0);
     greenSphere->radius = 1.0f;
     //greenSphere->baseColor = glm::uvec3(0, 255, 0);
     sphereList.push_back(greenSphere);
 
     Sphere* blueSphere = new Sphere(blue);
-    blueSphere->position = glm::vec3(3.0, 2.0, -7.0);
+    blueSphere->position = glm::vec3(-3.0, -3.0, -15.0);
     blueSphere->radius = 1.0f;
     //blueSphere->baseColor = glm::uvec3(0, 0, 255);
     sphereList.push_back(blueSphere);
 
-    //Light
+    Sphere* whiteSphere = new Sphere(white);
+    whiteSphere->position = glm::vec3(3.0, -3.0, -15.0);
+    whiteSphere->radius = 1.0f;
+    //blueSphere->baseColor = glm::uvec3(0, 0, 255);
+    sphereList.push_back(whiteSphere);
 
+    //Light
     DirectionalLight* light = new DirectionalLight();
     light->strength = 1.0f;
-    light->direction = (glm::vec3(0.0f, 0.5f, 1.0f));
+    light->lightRotate(glm::vec3(glm::radians(130.0f), glm::radians(0.0f), glm::radians(0.0f)));
 
-    cam->camRotate(0.0f, 0.0f, -90.0f);
-    //std::cout << cam->calculateFOV() << std::endl;
+    cam->camRotate(180.0f, 0.0f, -90.0f);
+    cam->isPerspective = false;
+    //cam->orthoScale = 10.0f;
 
     //Output TGA
     ImageFile* imageFile = new ImageFile(screenWidth_, screenHeight_);
@@ -60,8 +68,9 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     {
         for (int j = 0; j < screenHeight_; j++)
         {
-            (*render)[i][j] = glm::uvec3(50, 50, 50);
+            (*render)[i][j] = glm::uvec3(20, 20, 50);
             Ray* curRay = cam->getRay(i, j);
+            imageFile->addPixel(i, j, 20, 20, 50);
             for (int obj = 0; obj < sphereList.size(); obj++)
             {
                 glm::vec3 intersectionPoint;
@@ -69,7 +78,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
                 {
                     glm::uvec3 result = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), light, curRay->direction);
                     (*render)[i][j] = result;
-                    imageFile->addPixel(result.x, result.y, result.z);
+                    imageFile->addPixel(i, j, result.x, result.y, result.z);
                 }
             }
         }

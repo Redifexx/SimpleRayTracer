@@ -9,7 +9,15 @@ struct Camera
     glm::vec3 camBasisV;
     glm::vec3 camBasisW;
     glm::quat orientation;
+
+    float left = -1.0f;
+    float right = 1.0f;
+    float bottom = -1.0f;
+    float top = 1.0f;
+
+    float orthoScale;
     float perspectiveDistance;
+
     float maxRayLength;
     int screenWidth;
     int screenHeight;
@@ -23,7 +31,12 @@ struct Camera
         camBasisV = glm::vec3(0.0f, 1.0f, 0.0f);
         camBasisW = glm::vec3(0.0f, 0.0f, 1.0f);
         orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-        perspectiveDistance = 0.5f;
+        perspectiveDistance = 10.0f;
+        orthoScale = 5.0f;
+        left *= orthoScale;
+        right *= orthoScale;
+        bottom *= orthoScale;
+        top *= orthoScale;
         maxRayLength = 1000;
         screenWidth = screenWidth_;
         screenHeight = screenHeight_;
@@ -77,31 +90,32 @@ struct Camera
 
     Ray* getRay(int ic, int jc)
     {
-        float u = (ic + 0.5) / screenWidth;
-        float v = (jc + 0.5) / screenHeight;
         Ray* curRay = new Ray(maxRayLength);
         if (isPerspective)
         {
+            float u = (left + (right - left) * (ic + 0.5)) / screenWidth;
+            float v = (bottom + (top - bottom) * (jc + 0.5)) / screenHeight;
             curRay->origin = ((camPos));
             glm::vec3 tempW = camBasisW;
             tempW *= -perspectiveDistance;
             glm::vec3 tempU = camBasisU;
-            tempU *= (u - 0.5f);
+            tempU *= (u - (orthoScale));
             glm::vec3 tempV = camBasisV;
-            tempV *= (v - 0.5f);
+            tempV *= (v - (orthoScale));
             curRay->direction = tempW + tempU + tempV;
             curRay->direction = glm::vec3(viewMatrix * glm::vec4(curRay->direction, 0.0));
-        } else
+        } else //Orthographic Cam
         {
+            float u = (left + (right - left) * (ic + 0.5)) / screenWidth;
+            float v = (bottom + (top - bottom) * (jc + 0.5)) / screenHeight;
             glm::vec3 tempW = camBasisW;
             curRay->direction = ((-tempW));
-            //curRay->direction = glm::vec3(viewMatrix * glm::vec4(curRay->direction, 0.0));
             glm::vec3 tempU = camBasisU;
-            tempU *= (u - 0.5f);
+            tempU *= (u - (orthoScale));
             glm::vec3 tempV = camBasisV;
-            tempV *= (v - 0.5f);
+            tempV *= (v - (orthoScale));
             curRay->origin = tempW + tempU + tempV;
-            curRay->origin = glm::vec3(viewMatrix * glm::vec4(curRay->origin, 0.0));
+            curRay->origin = glm::vec3(-viewMatrix * glm::vec4(curRay->origin, 0.0));
         }
         return curRay;
     }
