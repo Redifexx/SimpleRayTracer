@@ -31,7 +31,7 @@ struct Camera
         camBasisV = glm::vec3(0.0f, 1.0f, 0.0f);
         camBasisW = glm::vec3(0.0f, 0.0f, 1.0f);
         orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-        perspectiveDistance = 10.0f;
+        perspectiveDistance = 5.0f;
         orthoScale = 5.0f;
         left *= orthoScale;
         right *= orthoScale;

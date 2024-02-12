@@ -6,13 +6,16 @@
 #include <cmath>
 #include <math.h>
 #include <iostream>
+#include <vector>
 #define _USE_MATH_DEFINES
 
 struct Light;
 struct DirectionalLight;
 struct Material;
 struct Sphere;
-struct Ray;
+struct Triangle;
+struct Object;
+struct Ray; 
 
 glm::vec3 rgbToFloat(glm::uvec3 RGB)
 {
@@ -56,53 +59,43 @@ glm::vec3 eulerToVector(glm::vec3 angles) //Asssumiong Radisans
     dirVector.x = cos(angles.y) * cos(angles.x);
     dirVector.y = sin(angles.y) * cos(angles.x);
     dirVector.z = sin(angles.x);
-    std::cout << dirVector.x << " " << dirVector.y << " " << dirVector.z << std::endl;
+    //std::cout << dirVector.x << " " << dirVector.y << " " << dirVector.z << std::endl;
     return glm::normalize(dirVector);
 }
 
 struct Light 
 {
-    public:
+    bool isPoint;
     glm::vec3 position;
     glm::vec3 direction;
     float strength;
     glm::vec3 baseColor;
     Light()
     {
+        isPoint = false;
         position = glm::vec3(0.0f, 0.0f, 0.0f);
         direction = glm::vec3(0.0f, 0.0f, 0.0f);
         strength = 0.1f;
         baseColor = glm::vec3(1.0f, 1.0f, 1.0f);
     }
-    virtual void lightRotate(glm::vec3 rotation) = 0;
-    virtual glm::vec3 getDirection() = 0;
-};
 
-struct DirectionalLight : public Light
-{
-    glm::vec3 getDirection() override
+    void lightRotate(glm::vec3 rotation)
+    {
+        this->direction = eulerToVector(rotation);
+    }
+
+    glm::vec3 getDirection() 
     {
         return glm::normalize(this->direction);
     }
 
-    void lightRotate(glm::vec3 rotation) override
+    glm::vec3 getDirection(glm::vec3 posA) 
     {
-        this->direction = eulerToVector(rotation);
+        glm::vec3 directionVector = posA - this->position;
+        return glm::normalize(-directionVector);
     }
 };
 
-struct PointLight : public Light
-{
-    glm::vec3 getDirection() override
-    {
-        return glm::normalize(this->direction);
-    }
-
-    void lightRotate(glm::vec3 rotation) override
-    {
-        this->direction = eulerToVector(rotation);
-    }
-};
 
 struct Material
 {
@@ -125,67 +118,7 @@ struct Material
         phongExponent = 8.0f;
     }
 
-    glm::uvec3 shaderPixel(glm::vec3 surfaceNormal, Light* light, glm::vec3 camVector)
-    {;
-        surfaceNormal = glm::normalize(surfaceNormal);
-        glm::vec3 lightVector = -light->getDirection();
-
-        //Ambient
-        glm::vec3 lightAmbient = 
-        (
-            (glm::vec3(ambientColor.x * ambientIntensity, ambientColor.y * ambientIntensity, ambientColor.z * ambientIntensity))
-        );
-
-        //Diffuse
-        float diffuseMultipliers = (diffuseIntensity) * (light->strength) * glm::max(0.0f, (glm::dot(surfaceNormal, lightVector)));
-        glm::uvec3 diffuseVectors = 
-        (
-            (glm::uvec3(diffuseColor.x, diffuseColor.y, diffuseColor.z)
-            *
-            glm::uvec3(light->baseColor.x, light->baseColor.y, light->baseColor.z))
-        );
-
-        glm::vec3 lightDiffuse =
-        (
-            glm::vec3(diffuseVectors.x * diffuseMultipliers, diffuseVectors.y * diffuseMultipliers, diffuseVectors.z * diffuseMultipliers)
-        );
-
-
-        //Specular
-        glm::vec3 eyeVector = glm::normalize(-camVector);
-        glm::vec3 eyePlusLight = (eyeVector + lightVector);
-        glm::vec3 hVector = glm::normalize(eyePlusLight / glm::length(eyePlusLight));
-
-        float specularMultipliers = (specularIntensity) * (light->strength) * std::pow(glm::max(0.0f, (glm::dot(surfaceNormal, hVector))), phongExponent);
-
-
-        glm::uvec3 specularVectors = 
-        (
-            (glm::uvec3(specularColor.x, specularColor.y, specularColor.z)
-            *
-            glm::uvec3(light->baseColor.x, light->baseColor.y, light->baseColor.z))
-        );
-
-
-        glm::vec3 lightSpecular =
-        (
-            glm::vec3(specularVectors.x * specularMultipliers, specularVectors.y * specularMultipliers, specularVectors.z * specularMultipliers)
-        );
-
-        
-        //glm::vec3 finalColor = lightSpecular;
-        glm::vec3 finalColor = lightDiffuse + lightAmbient + lightSpecular;
-        
-        glm::vec3 clampedEmission 
-        (
-            glm::clamp(finalColor.x, 0.0f, 1.0f),
-            glm::clamp(finalColor.y, 0.0f, 1.0f),
-            glm::clamp(finalColor.z, 0.0f, 1.0f)
-        );
-        //return finalColor;
-        return floatToRGB(clampedEmission);
-        //return floatToRGB(finalColor);
-    }
+    glm::uvec3 shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> lights, glm::vec3 camVector, glm::vec3& intersectionPoint, std::vector<Triangle*>& triangles, std::vector<Sphere*>& spheres);
 };
 
 struct Sphere 
@@ -216,6 +149,45 @@ struct Sphere
     }
 };
 
+struct Triangle
+{
+    //Always drawn counter clockwise
+    glm::vec3 vertices[3];
+    Material* material;
+    Triangle(glm::vec3 a, glm::vec3 b, glm::vec3 c, Material* mat)
+    {
+        this->vertices[0] = a;
+        this->vertices[1] = b;
+        this->vertices[2] = c;
+        material = mat;
+    }
+    glm::vec3 surfaceNormal()
+    {
+        glm::vec3 aVert = this->vertices[0];
+        glm::vec3 bVert = this->vertices[1];
+        glm::vec3 cVert = this->vertices[2];
+
+        glm::vec3 vecAB = glm::vec3(bVert.x - aVert.x, bVert.y - aVert.y, bVert.z - aVert.z);
+        glm::vec3 vecAC = glm::vec3(cVert.x - aVert.x, cVert.y - aVert.y, cVert.z - aVert.z);
+
+        return glm::normalize(glm::cross(vecAB, vecAC));
+    }
+};
+
+struct Object 
+{
+    glm::vec3 position;
+    glm::vec3 rotation;
+    std::vector<Triangle*> triangles;
+    Material* material;
+    Object(Material* mat)
+    {
+        position = glm::vec3(0.0f, 0.0f, 0.0f);
+        rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+        material = mat;
+    }
+};
+
 struct Ray
 {
     glm::vec3 origin;
@@ -225,9 +197,9 @@ struct Ray
     {
         scalar = scalar_;
     }  
-    bool raySphereIntersection(Sphere* sphere, glm::vec3& intersectPoint, glm::mat4 camViewMatrix)
+    bool raySphereIntersection(Sphere* sphere, glm::vec3& intersectPoint, float& t0, float tMin, float tMax)
     {
-        glm::vec3 originAndCenter = this->origin - sphere->position;
+        glm::vec3 originAndCenter = sphere->position - this->origin;
         bool sphereIntersection = false;
         float b = (glm::dot(this->direction, originAndCenter));
         float a = (glm::dot(this->direction, this->direction));
@@ -235,13 +207,193 @@ struct Ray
         float discriminant = (std::pow(b, 2) - a*c);
         if (discriminant > 0.0)
         {
-            float t1 = ((-b) - std::sqrt(discriminant)) / a;
-            float t2 = ((-b) + std::sqrt(discriminant)) / a;
-            float t = (t1 < t2) ? t1 : t2;
-            intersectPoint = this->origin + t * this->direction;
-            return true;
+            float t1 = ((-b) + std::sqrt(discriminant)) / a;
+            float t2 = ((-b) - std::sqrt(discriminant)) / a;
+            float t = ((t1 < t2) ? t1 : t2);
+            //std::cout << t << std::endl;
+            if ((t > t0) || t < tMin)
+            {
+                return false;
+            }
+            else
+            {
+                t0 = std::abs(t);
+                intersectPoint = this->origin + -t * this->direction;
+                return true;
+            }
         }
         return false;
     }
+
+    bool rayTriangleIntersection(Triangle* tri, glm::vec3& intersectPoint, float& t0, float t1, float t2)
+    {
+        glm::vec3 aVert = tri->vertices[0];
+        glm::vec3 bVert = tri->vertices[1];
+        glm::vec3 cVert = tri->vertices[2];
+
+        //A - B Vertex
+        float a = (aVert.x - bVert.x);
+        float b = (aVert.y - bVert.y);
+        float c = (aVert.z - bVert.z);
+
+        //A - C Vertex
+        float d = (aVert.x - cVert.x);
+        float e = (aVert.y - cVert.y);
+        float f = (aVert.z - cVert.z);
+
+        //Direction Vector
+        float g = (this->direction.x);
+        float h = (this->direction.y);
+        float i = (this->direction.z);
+
+        //A - EyeOrigin
+        float j = (aVert.x - this->origin.x);
+        float k = (aVert.y - this->origin.y);
+        float l = (aVert.z - this->origin.z);
+
+        //Common Numbers
+        float EIHF = (e * i) - (h * f);
+        float GFDI = (g * f) - (d * i);
+        float DHEG = (d * h) - (e * g);
+        float AKJB = (a * k) - (j * b);
+        float JCAL = (j * c) - (a * l);
+        float BLKC = (b * l) - (k * c);
+        float Mu = (a * (EIHF)) + (b * (GFDI)) + (c * (DHEG));
+
+        float t = ((f * (AKJB)) + (e * (JCAL)) + (d * (BLKC))) / Mu;
+        if ((t < t1) || (t > t2)) 
+        {
+            return false;
+        }
+        if (t > t0)
+        {
+            return false;
+        } else
+        {
+            t0 = t;
+        }
+        //std::cout << t << std::endl;
+        intersectPoint = this->origin + -t * this->direction;
+
+        float Gamma = ((i * (AKJB)) + (h * (JCAL)) + (j * (BLKC))) / Mu;
+        if ((Gamma < 0.0f) || (Gamma > 1.0f)) 
+        {
+            return false;
+        }
+
+        float Beta = ((j * (EIHF)) + (k * (GFDI)) + (l * (DHEG))) / Mu;
+        if ((Beta < 0.0f) || (Beta > (1.0f - Gamma)) )
+        {
+            return false;
+        }
+        return true;
+    }
+
 };
+
+//Material Shader
+glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> lights, glm::vec3 camVector, glm::vec3& intersectionPoint, std::vector<Triangle*>& triangles, std::vector<Sphere*>& spheres)
+{
+    surfaceNormal = glm::normalize(surfaceNormal);
+    //Ambient
+    glm::vec3 lightAmbient = 
+    (
+        (glm::vec3(ambientColor.x * ambientIntensity, ambientColor.y * ambientIntensity, ambientColor.z * ambientIntensity))
+    );
+    glm::vec3 lightSpecular = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 lightDiffuse = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 lightVector;
+
+    for (int i = 0; i < lights.size(); i++)
+    {
+        if (lights[i]->isPoint)
+        {
+            lightVector = lights[i]->getDirection(intersectionPoint);
+        }
+        else
+        {
+            lightVector = -lights[i]->getDirection();
+        }
+
+        //Diffuse
+        float diffuseMultipliers = (diffuseIntensity) * (lights[i]->strength) * glm::max(0.0f, (glm::dot(surfaceNormal, lightVector)));
+        glm::uvec3 diffuseVectors = 
+        (
+            (glm::uvec3(diffuseColor.x, diffuseColor.y, diffuseColor.z)
+            *
+            glm::uvec3(lights[i]->baseColor.x, lights[i]->baseColor.y, lights[i]->baseColor.z))
+        );
+
+        //Specular
+        glm::vec3 eyeVector = glm::normalize(-camVector);
+        glm::vec3 eyePlusLight = (eyeVector + lightVector);
+        glm::vec3 hVector = glm::normalize(eyePlusLight / glm::length(eyePlusLight));
+
+        float specularMultipliers = (specularIntensity) * (lights[i]->strength) * std::pow(glm::max(0.0f, (glm::dot(surfaceNormal, hVector))), phongExponent);
+
+        glm::uvec3 specularVectors = 
+        (
+            (glm::uvec3(specularColor.x, specularColor.y, specularColor.z)
+            *
+            glm::uvec3(lights[i]->baseColor.x, lights[i]->baseColor.y, lights[i]->baseColor.z))
+        );  
+        
+        Ray* shadowRay = new Ray(1.0f);
+        shadowRay->origin = intersectionPoint;
+        shadowRay->direction = -lightVector;
+        glm::vec3 dummyIntersect = glm::vec3(0.0f, 0.0f, 0.0f);
+        float t0 = 1000.0f;
+        float t1 = 0.01f;
+        float t2 = 1000.0f;
+        bool isBlocked = false;
+        
+        for (int count = 0; count < triangles.size(); count++)
+        {
+            if (shadowRay->rayTriangleIntersection(triangles[count], dummyIntersect, t0, t1, t2))
+            {
+                isBlocked = true;
+                break;
+            }
+        }
+        
+
+        for (int count = 0; count < spheres.size(); count++)
+        {
+            if (shadowRay->raySphereIntersection(spheres[count], dummyIntersect, t0, t1, t2))
+            {
+                isBlocked = true;
+                break;
+            }
+        }
+        
+
+        if (!isBlocked)
+        {
+            lightDiffuse +=
+            (
+                glm::vec3(diffuseVectors.x * diffuseMultipliers, diffuseVectors.y * diffuseMultipliers, diffuseVectors.z * diffuseMultipliers)
+            );
+
+            lightSpecular +=
+            (
+                glm::vec3(specularVectors.x * specularMultipliers, specularVectors.y * specularMultipliers, specularVectors.z * specularMultipliers)
+            );
+        }
+    }
+
+    
+    glm::vec3 finalColor = (lightDiffuse + lightAmbient + lightSpecular); // + glm::vec3(this->shaderPixel(surfaceNormal, lights, camVector, intersectionPoint, triangles, spheres));
+    
+    glm::vec3 clampedEmission 
+    (
+        glm::clamp(finalColor.x, 0.0f, 1.0f),
+        glm::clamp(finalColor.y, 0.0f, 1.0f),
+        glm::clamp(finalColor.z, 0.0f, 1.0f)
+    );
+    //return finalColor;
+    return floatToRGB(clampedEmission);
+    //return floatToRGB(finalColor);
+}
+
+
 #endif // TYPES_H

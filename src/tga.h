@@ -18,7 +18,7 @@ struct ImageFile
         finalResult = new Header();
         width = width_;
         height = height_;
-        fileName = "result.tga";
+        fileName = "../output/result2.tga";
         finalResult->width = width_;
         finalResult->height = height_;
         finalResult->pixels.resize(height);
