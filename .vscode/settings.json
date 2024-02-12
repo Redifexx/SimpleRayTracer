@@ -70,5 +70,6 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "xtree": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": false
 }

@@ -38,10 +38,12 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     //white->specularIntensity = 0.8f;
 
 
-    //Triangle Points
-    glm::vec3 aVertex = glm::vec3(-2.0f, 0.0f, -2.0f);
-    glm::vec3 bVertex = glm::vec3(2.0f, 0.0f, -2.0f);
-    glm::vec3 cVertex = glm::vec3(0.0f, 2.0f, -2.0f);
+    //Pyramid Points
+    glm::vec3 aVertex = glm::vec3(-1.0f, 1.0f, 1.0f);
+    glm::vec3 bVertex = glm::vec3(1.0f, 1.0f, 1.0f);
+    glm::vec3 cVertex = glm::vec3(1.0f, 1.0f, -1.0f);
+    glm::vec3 dVertex = glm::vec3(-1.0f, 1.0f, -1.0f);
+    glm::vec3 eVertex = glm::vec3(0.0f, 3.0f, 0.0f);
 
     //Plane Points
     float scale = 1.0f; 
@@ -55,22 +57,33 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     Sphere* blueSphere;
     Sphere* whiteSphere;
     Sphere* newSphere;
+    Sphere* tempSphere;
 
     //Spheres for Triangle1
     redSphere = new Sphere(red);
     redSphere->position = aVertex;
-    redSphere->radius = 0.3f;
+    redSphere->radius = 0.1f;
     sphereList.push_back(redSphere);
 
     greenSphere = new Sphere(green);
     greenSphere->position = bVertex;
-    greenSphere->radius = 0.3f;
+    greenSphere->radius = 0.1f;
     sphereList.push_back(greenSphere);
 
     blueSphere = new Sphere(blue);
     blueSphere->position = cVertex;
-    blueSphere->radius = 0.3f;
+    blueSphere->radius = 0.1f;
     sphereList.push_back(blueSphere);
+
+    tempSphere = new Sphere(white);
+    tempSphere->position = dVertex;
+    tempSphere->radius = 0.1f;
+    sphereList.push_back(tempSphere);
+
+    tempSphere = new Sphere(magenta);
+    tempSphere->position = eVertex;
+    tempSphere->radius = 0.1f;
+    sphereList.push_back(tempSphere);
 
     whiteSphere = new Sphere(white);
     whiteSphere->position = glm::vec3(0.0, 4.5, -5.0);
@@ -82,34 +95,34 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     whiteSphere->radius = 0.6f;
     sphereList.push_back(whiteSphere);
 
-    newSphere = new Sphere(magenta);
+    newSphere = new Sphere(white);
     newSphere->position = glm::vec3(0.0, 0.0, 0.0);
-    newSphere->radius = 1.0f;
+    newSphere->radius = 0.5f;
     sphereList.push_back(newSphere);
 
     //
     //Spheres for Triangle2
     redSphere = new Sphere(red);
     redSphere->position = oneVertex;
-    redSphere->radius = 0.3f;
+    redSphere->radius = 0.1f;
     //redSphere->baseColor = glm::uvec3(255, 0, 0);
     sphereList.push_back(redSphere);
 
     greenSphere = new Sphere(green);
     greenSphere->position = threeVertex;
-    greenSphere->radius = 0.3f;
+    greenSphere->radius = 0.1f;
     //greenSphere->baseColor = glm::uvec3(0, 255, 0);
     sphereList.push_back(greenSphere);
 
     blueSphere = new Sphere(blue);
     blueSphere->position = twoVertex;
-    blueSphere->radius = 0.3f;
+    blueSphere->radius = 0.1f;
     //blueSphere->baseColor = glm::uvec3(0, 0, 255);
     sphereList.push_back(blueSphere);
 
     blueSphere = new Sphere(white);
     blueSphere->position = fourVertex;
-    blueSphere->radius = 0.3f;
+    blueSphere->radius = 0.1f;
     //blueSphere->baseColor = glm::uvec3(0, 0, 255);
     sphereList.push_back(blueSphere);
 
@@ -134,10 +147,18 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     light->isPoint = true;
     lightList.push_back(light);
 
+    light = new Light();
+    light->strength = 1.0f;
+    light->position = glm::vec3(4.0f, 4.0f, 0.0f);
+    light->baseColor = glm::vec3(0.0f, 1.0, 0.0f);
+    light->isPoint = true;
+    lightList.push_back(light);
+
     //Triangle
     Triangle* triangle = new Triangle(aVertex, bVertex, cVertex, white);
     //triangleList.push_back(triangle);
 
+    //Plane
     Object* plane = new Object(white);
     triangle = new Triangle(threeVertex, twoVertex, oneVertex, plane->material);
     plane->triangles.push_back(triangle);
@@ -146,18 +167,49 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     plane->triangles.push_back(triangle);
     triangleList.push_back(triangle);
 
-    std::cout << "SIZE " << triangleList.size() << std::endl;
+    //Tetrahedron
+    triangle = new Triangle(aVertex, bVertex, eVertex, blue);
+    triangleList.push_back(triangle);
+
+    triangle = new Triangle(bVertex, cVertex, eVertex, blue);
+    triangleList.push_back(triangle);
+
+    triangle = new Triangle(cVertex, dVertex, eVertex, blue);
+    triangleList.push_back(triangle);
+
+    triangle = new Triangle(dVertex, aVertex, eVertex, blue);
+    triangleList.push_back(triangle);
+
+
+    //std::cout << "SIZE " << triangleList.size() << std::endl;
 
     //Camera
-    cam->camPos = glm::vec3(0.0f, 5.0f, 15.0f);
-    float camAngle = 180.0f;
-    cam->camRotate(180.0f, -15.0f, -90.0f);
+    glm::vec3 camPosition = glm::vec3(0.0f, 3.0f, 15.0f);
+    cam->camPos = glm::vec3(camPosition.x, camPosition.y, camPosition.z);
+    //(L-R, )
+    glm::vec3 camRotation = glm::vec3(180.0f, 0.0f, -90.0f);
+    cam->camRotate(camRotation.x, camRotation.y, camRotation.z);
     cam->isPerspective = true;
-    cam->perspectiveDistance = 10.0f;
+    cam->perspectiveDistance = 5.0f;
     //cam->orthoScale = 10.0f;
     
-    for (int seq = 0; seq < 1; seq++)
+    //Camera Orbit
+    int frames = 5;
+
+    float orbitRadius = 10.0f;
+    float orbitSpeed = glm::radians(360.0f) / frames;
+
+    for (int seq = 0; seq < 5; seq++)
     {
+        float angle = seq * orbitSpeed;
+        float newX = orbitRadius * glm::cos(angle);
+        float newZ = orbitRadius * glm::sin(angle);
+        camPosition.x = newX;
+        camPosition.z = newZ;
+        std::cout << "X: " << camPosition.x << " Y: " << camPosition.y << " Z: " << camPosition.z << std::endl;
+        std::cout << "X: " << camRotation.x << " Y: " << camRotation.y << " Z: " << camRotation.z << std::endl;
+        cam->camPos = glm::vec3(camPosition.x, camPosition.y, camPosition.z);
+        //camRotation.x -= 5.0f;
         //Output TGA
         ImageFile* imageFile = new ImageFile(screenWidth_, screenHeight_);
         float t1 = 0.0f;
@@ -197,18 +249,12 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
         imageFile->fileName = "../output/" + std::to_string(seq) + ".tga";
         imageFile->fileWrite();
         std::cout << imageFile->fileName << ": FILE WRITTEN" << std::endl;
-        //cam->camPos.x -= 3.0f;
-        //aVertex.z += 1.0f;
-        //cVertex.z -= 1.0f;
-        //triangle->vertices[0] = aVertex;
-        //triangle->vertices[1] = bVertex;
-        //triangle->vertices[2] = cVertex;
-        //redSphere->position = aVertex;
-        //greenSphere->position = bVertex;
-        //blueSphere->position = cVertex;
-        //cam->camPos = glm::vec3(cam->camPos.x, 0.0f, -3.0f);
-        //camAngle -= 22.5f;
-        //cam->camRotate(camAngle, 0.0f, -90.0f);
+        //Basic Animation
+
+        //camPosition = glm::vec3(0.0f, 5.0f, 15.0f);
+        //cam->camPos = glm::vec3(camPosition.x-5.0f, camPosition.y, camPosition.z);
+        //cam->updateViewMatrix(glm::vec3(0.0f));
+        cam->camRotate(camRotation.x, camRotation.y, camRotation.z);
     }
     return *render;
 };

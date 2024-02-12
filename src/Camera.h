@@ -70,7 +70,20 @@ struct Camera
         glm::vec3 up = glm::vec3(rotationMatrix * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
 
         viewMatrix = glm::lookAt(camPos, camPos + direction, up);
+        //glm::vec3(0.0f)
+        //viewMatrix = glm::lookAt(camPos, glm::vec3(0.0f), up);
     }
+
+    /*
+    void updateViewMatrix(glm::vec3 lookAt)
+    {
+        glm::mat4 rotationMatrix = glm::mat4_cast(orientation);
+        glm::vec3 direction = glm::vec3(rotationMatrix * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
+        glm::vec3 up = glm::vec3(rotationMatrix * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f));
+
+        viewMatrix = glm::lookAt(camPos, lookAt, up);
+    }
+    */
 
     float calculateFOV()
     {

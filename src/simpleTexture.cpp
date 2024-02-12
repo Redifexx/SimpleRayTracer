@@ -41,6 +41,12 @@ const char* fragmentShaderSource = "#version 330 core\n"
 
 int main()
 {
+    const int width = 512; // keep it in powers of 2!
+    const int height = 512; // keep it in powers of 2!
+    unsigned char image[width * height * 3];
+    std::vector<std::vector<glm::uvec3>>& output = renderOutput(width, height);
+
+    /*
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -228,6 +234,7 @@ int main()
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
+    */
     return 0;
 }
 

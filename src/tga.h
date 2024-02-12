@@ -58,10 +58,10 @@ struct ImageFile
     void fileWrite()
     {
         ofstream imageFile(fileName, ios_base::out | ios_base::binary);
-        std::cout << "TEST1 " << imageFile.is_open() << " " << fileName << std::endl;
+        //std::cout << "TEST1 " << imageFile.is_open() << " " << fileName << std::endl;
         if (imageFile.is_open())
         {
-            std::cout << "TEST" << std::endl;
+            //std::cout << "TEST" << std::endl;
             char idLength_ = finalResult->idLength;
             imageFile.write(&idLength_, sizeof(idLength_));
 
@@ -111,8 +111,8 @@ struct ImageFile
                 unsigned char red_ = pixels_->red;
                 imageFile.write((char*)&red_, sizeof(red_));
             }*/
-            std::cout << finalResult->pixels.size() << std::endl;
-            std::cout << finalResult->pixels.at(finalResult->pixels.size() - 1).size() << std::endl;
+            //std::cout << finalResult->pixels.size() << std::endl;
+            //td::cout << finalResult->pixels.at(finalResult->pixels.size() - 1).size() << std::endl;
 
             for (int i = 0; i < width; i++)
             {
