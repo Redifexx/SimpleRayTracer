@@ -172,7 +172,26 @@ struct Triangle
         glm::vec3 vecAB = glm::vec3(bVert.x - aVert.x, bVert.y - aVert.y, bVert.z - aVert.z);
         glm::vec3 vecAC = glm::vec3(cVert.x - aVert.x, cVert.y - aVert.y, cVert.z - aVert.z);
 
-        return glm::normalize(glm::cross(vecAB, vecAC));
+        glm::vec3 normal = glm::normalize(glm::cross(vecAB, vecAC));
+
+        return normal;
+    }
+    glm::vec3 weightedNormal(float alpha, float beta, float gamma)
+    {
+        glm::vec3 aVert = this->vertices[0];
+        glm::vec3 bVert = this->vertices[1];
+        glm::vec3 cVert = this->vertices[2];
+
+        glm::vec3 vecAB = glm::vec3(bVert.x - aVert.x, bVert.y - aVert.y, bVert.z - aVert.z);
+        glm::vec3 vecAC = glm::vec3(cVert.x - aVert.x, cVert.y - aVert.y, cVert.z - aVert.z);
+
+        glm::vec3 normal = this->surfaceNormal();
+        glm::vec3 normalALPHA = alpha * normal;
+        glm::vec3 normalBETA = beta * normal;
+        glm::vec3 normalGAMMA = gamma * normal;
+        glm::vec3 weightedNormal = normalALPHA + normalBETA + normalGAMMA;
+
+        return glm::normalize(weightedNormal);
     }
 };
 
@@ -245,12 +264,67 @@ struct Ray
         return false;
     }
 
-    bool rayTriangleIntersection(Triangle* tri, glm::vec3& intersectPoint, float& t0, float t1, float t2)
+    bool rayTriangleIntersection(Triangle* tri, glm::vec3& intersectPoint, float& t0, float t1, float t2, float& alpha_, float& beta_, float& gamma_)
     {
         glm::vec3 aVert = tri->vertices[0];
         glm::vec3 bVert = tri->vertices[1];
         glm::vec3 cVert = tri->vertices[2];
+        float planeDirection = glm::dot(tri->surfaceNormal(), aVert);
+        float normDir = glm::dot(tri->surfaceNormal(), -this->direction);
+        float normOri = glm::dot(tri->surfaceNormal(), this->origin);
+        float dVar = glm::dot(tri->surfaceNormal(), aVert);
+        if (normDir == 0.0f)
+        {
+            return false;
+        }
+        float t = (dVar - (normOri)) / (normDir);
+        glm::vec3 tempIntersection = this->origin + -t * this->direction;
 
+        float abEDGE = glm::dot(glm::cross(bVert - aVert, tempIntersection - aVert), tri->surfaceNormal());
+        if (abEDGE < 0.0f)
+        {
+            return false;
+        }
+
+        float bcEDGE = glm::dot(glm::cross(cVert - bVert, tempIntersection - bVert), tri->surfaceNormal());
+        if (bcEDGE < 0.0f)
+        {
+            return false;
+        }
+
+        float caEDGE = glm::dot(glm::cross(aVert - cVert, tempIntersection - cVert), tri->surfaceNormal());
+        if (caEDGE < 0.0f)
+        {
+            return false;
+        }
+
+        if ((t < t1) || (t > t2)) 
+        {
+            return false;
+        }
+        if (t < t0)
+        {
+            t0 = t;
+        } 
+
+
+        float areaQBC = glm::length(glm::cross(cVert - bVert, tempIntersection - bVert)) / 2.0f;
+        float areaABC = glm::length(glm::cross(cVert - bVert, aVert - bVert)) / 2.0f;
+        float ALPHA = areaQBC / areaABC;
+        alpha_ = ALPHA;
+
+        float areaAQC = glm::length(glm::cross(cVert - tempIntersection, aVert - tempIntersection)) / 2.0f;
+        float BETA = areaAQC / areaABC;
+        beta_ = BETA;
+
+        float areaABQ = glm::length(glm::cross(tempIntersection - bVert, aVert - bVert)) / 2.0f;
+        float GAMMA = areaABQ / areaABC;
+        gamma_ = GAMMA;
+
+        intersectPoint = tempIntersection;
+        return true;
+
+        /*
         //A - B Vertex
         float a = (aVert.x - bVert.x);
         float b = (aVert.y - bVert.y);
@@ -280,33 +354,33 @@ struct Ray
         float BLKC = (b * l) - (k * c);
         float Mu = (a * (EIHF)) + (b * (GFDI)) + (c * (DHEG));
 
+        float Gamma = ((i * (AKJB)) + (h * (JCAL)) + (j * (BLKC))) / Mu;
+        float Beta = ((j * (EIHF)) + (k * (GFDI)) + (l * (DHEG))) / Mu;
         float t = ((f * (AKJB)) + (e * (JCAL)) + (d * (BLKC))) / Mu;
         if ((t < t1) || (t > t2)) 
         {
             return false;
         }
-        if (t > t0)
-        {
-            return false;
-        } else
+        if (t < t0)
         {
             t0 = t;
-        }
-        //std::cout << t << std::endl;
-        intersectPoint = this->origin + -t * this->direction;
+        } 
 
-        float Gamma = ((i * (AKJB)) + (h * (JCAL)) + (j * (BLKC))) / Mu;
         if ((Gamma < 0.0f) || (Gamma > 1.0f)) 
         {
             return false;
         }
 
-        float Beta = ((j * (EIHF)) + (k * (GFDI)) + (l * (DHEG))) / Mu;
-        if ((Beta < 0.0f) || (Beta > (1.0f - Gamma)) )
+        if ((Beta < 0.0f) || (Beta > (1.0f - Gamma)))
         {
             return false;
         }
+        
+
+        intersectPoint = aVert + Beta * (bVert - aVert) + Gamma * (cVert - aVert);
+
         return true;
+        */
     }
 
 };
@@ -368,12 +442,13 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
         shadowRay->direction = -lightVector;
         glm::vec3 dummyIntersect = glm::vec3(0.0f, 0.0f, 0.0f);
         bool isBlocked = false;
+        float alpha, beta, gamma;
         
         for (int count = 0; count < triangles.size(); count++)
         {
-            if (shadowRay->rayTriangleIntersection(triangles[count], dummyIntersect, t0, t1, t2))
+            if (shadowRay->rayTriangleIntersection(triangles[count], dummyIntersect, t0, t1, t2, alpha, beta, gamma))
             {
-                //isBlocked = true;
+                isBlocked = true;
                 break;
             }
         }
@@ -408,6 +483,7 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
     tempRay->origin = intersectionPoint;
     tempRay->direction = glm::reflect(camRay->direction, surfaceNormal);
     glm::vec3 newIntersection;
+    float alpha, beta, gamma;
 
     if (lightBounces > 0)
     {
@@ -424,9 +500,9 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
 
         for (int count = 0; count < triangles.size(); count++)
         {
-            if (tempRay->rayTriangleIntersection(triangles[count], newIntersection, t0, t1, t2))
+            if (tempRay->rayTriangleIntersection(triangles[count], newIntersection, t0, t1, t2, alpha, beta, gamma))
             {
-                glm::vec3 reflection = rgbToFloat((this->shaderPixel(triangles[count]->surfaceNormal(), lights, tempRay, lightBounces - 1, newIntersection, triangles, spheres)));
+                glm::vec3 reflection = rgbToFloat((this->shaderPixel(triangles[count]->weightedNormal(alpha, beta, gamma), lights, tempRay, lightBounces - 1, newIntersection, triangles, spheres)));
                 finalColor += (metallicFactor * reflection * triangles[count]->material->diffuseColor);
             }
         }

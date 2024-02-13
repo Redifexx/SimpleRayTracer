@@ -4,11 +4,12 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 
 std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenHeight_, bool isOrtho) 
 {
-
+    float renderTime = 0.0f;
     std::vector<Sphere*> sphereList;
     std::vector<Triangle*> triangleList;
     std::vector<Light*> lightList;
@@ -82,12 +83,12 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     //Sphere - Glossy
     sphere = new Sphere(glossy);
     sphere->position = glm::vec3(-5.0, 2.0, 0.0);
-    sphere->radius = 2.0f;
+    sphere->radius = 1.0f;
     sphereList.push_back(sphere);
 
     //Sphere - Diffuse
     sphere = new Sphere(red);
-    sphere->position = glm::vec3(5.0, 2.0, 3.0);
+    sphere->position = glm::vec3(5.0, 2.0, 0.0);
     sphere->radius = 1.0f;
     sphereList.push_back(sphere);
 
@@ -96,13 +97,13 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
 
     //Directional - Straight Down
     Light* light = new Light();
-    light->strength = 0.7f;
-    light->lightRotate(glm::vec3(glm::radians(180.0f), glm::radians(90.0f), glm::radians(0.0f)));
+    light->strength = 1.0f;
+    light->lightRotate(glm::vec3(glm::radians(180.0f), glm::radians(70.0f), glm::radians(0.0f)));
     lightList.push_back(light);
 
     //Point1
     light = new Light();
-    light->strength = 5.0f;
+    light->strength = 10.0f;
     light->position = glm::vec3(-2.5f, 4.0f, -5.0f);
     light->baseColor = glm::vec3(1.0f, 0.0f, 0.0f);
     light->isPoint = true;
@@ -110,7 +111,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     
     //Point 2
     light = new Light();
-    light->strength = 5.0f;
+    light->strength = 10.0f;
     light->position = glm::vec3(2.5f, 4.0f, -5.0f);
     light->baseColor = glm::vec3(0.0f, 1.0, 0.0f);
     light->isPoint = true;
@@ -118,7 +119,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
 
     //Point 3
     light = new Light();
-    light->strength = 5.0f;
+    light->strength = 10.0f;
     light->position = glm::vec3(0.0f, 4.0f, 5.0f);
     light->baseColor = glm::vec3(0.0f, 0.0, 1.0f);
     light->isPoint = true;
@@ -139,20 +140,26 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     plane->triangles.push_back(triangle);
     triangleList.push_back(triangle);
 
-    /*
+    
     //Tetrahedron Triangles
-    triangle = new Triangle(aVertex, bVertex, eVertex, blue);
+    triangle = new Triangle(bVertex, aVertex, eVertex, red);
+    //triangleList.push_back(triangle);
+
+    triangle = new Triangle(cVertex, bVertex, eVertex, blue);
+    //triangleList.push_back(triangle);
+
+    triangle = new Triangle(dVertex, cVertex, eVertex, green);
     triangleList.push_back(triangle);
 
-    triangle = new Triangle(eVertex, cVertex, bVertex, blue);
-    triangleList.push_back(triangle);
+    triangle = new Triangle(aVertex, dVertex, eVertex, white);
+    //triangleList.push_back(triangle);
 
-    triangle = new Triangle(cVertex, dVertex, eVertex, blue);
-    triangleList.push_back(triangle);
+    //triangle = new Triangle(aVertex, bVertex, cVertex, orange);
+    //triangleList.push_back(triangle);
 
-    triangle = new Triangle(dVertex, aVertex, eVertex, blue);
-    triangleList.push_back(triangle);
-    */
+    //triangle = new Triangle(aVertex, cVertex, dVertex, orange);
+    //triangleList.push_back(triangle);
+    
     //
     //Camera
 
@@ -164,7 +171,7 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     cam->camRotate(camRotation.x, camRotation.y, camRotation.z);
 
     cam->isPerspective = !isOrtho;
-    cam->perspectiveDistance = 5.0f;
+    cam->perspectiveDistance = 6.0f;
     
     //Camera Animation
     //int frames = 5;
@@ -175,14 +182,15 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     //Additional Settings
 
     //Reflection Depth
-    int lightBounces = 2;
+    int lightBounces = 3;
 
     //Infinite Plane Specification
     float planeDepth = -1.0f; 
 
     //Seq is how many rendered frames
-    for (int seq = 0; seq < 5; seq++)
+    for (int seq = 0; seq < 1; seq++)
     {
+        auto start = std::chrono::high_resolution_clock::now();
         //std::cout << "READY TO RENDER!" << std::endl;
         //Output TGA
         ImageFile* imageFile = new ImageFile(screenWidth_, screenHeight_);
@@ -209,9 +217,12 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
                 for (int tri = 0; tri < triangleList.size(); tri++)
                 {
                     intersectionPoint = glm::vec3(0.0f);
-                    if (curRay->rayTriangleIntersection(triangleList[tri], intersectionPoint, t0, t1, t2))
+                    float alpha;
+                    float beta;
+                    float gamma;
+                    if (curRay->rayTriangleIntersection(triangleList[tri], intersectionPoint, t0, t1, t2, alpha, beta, gamma))
                     {
-                        glm::vec3 result = triangleList[tri]->material->shaderPixel(-triangleList[tri]->surfaceNormal(), lightList, curRay, lightBounces, intersectionPoint, triangleList, sphereList);
+                        glm::vec3 result = triangleList[tri]->material->shaderPixel(-triangleList[tri]->weightedNormal(alpha, beta, gamma), lightList, curRay, lightBounces, intersectionPoint, triangleList, sphereList);
                         (*render)[i][j] = result;
                         imageFile->addPixel(i, j, result.x, result.y, result.z);
                     }
@@ -233,15 +244,19 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
         }
         imageFile->fileName = "../output/" + std::to_string(seq+1) + ".tga";
         imageFile->fileWrite();
-        std::cout << imageFile->fileName << ": FILE WRITTEN" << std::endl;
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+        renderTime += duration.count() / 1000.0f;
+        std::cout << imageFile->fileName << ": FILE WRITTEN in " << (duration.count() / 1000.0f) << " seconds!" << std::endl;
         //std::cout << imageFile->fileName << ": FILE WRITTEN" << std::endl;
 
         //Basic Animation
 
-        camPosition = glm::vec3(camPosition.x - 0.5f, camPosition.y, camPosition.z - 0.5f);
-        camRotation = glm::vec3(-5.0f, 1.0f, -1.0f);
+        camPosition = glm::vec3(camPosition.x - 0.25f, camPosition.y, camPosition.z - 0.5f);
+        camRotation = glm::vec3(-5.0f, 1.0f, -3.0f);
         cam->camRotate(camRotation.x, camRotation.y, camRotation.z);
         cam->camPos = glm::vec3(camPosition.x, camPosition.y, camPosition.z);
     }
+    std::cout << "Total Render Time: " << renderTime << " seconds!" << std::endl;
     return *render;
 };

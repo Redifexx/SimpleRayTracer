@@ -181,7 +181,8 @@ int main()
 
     // render loop
     // -----------
-    while (!glfwWindowShouldClose(window))
+    bool noWindow = true;
+    while (!glfwWindowShouldClose(window) && !noWindow)
     {
         // input
         // -----
