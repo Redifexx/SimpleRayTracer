@@ -6,18 +6,25 @@
 #include <fstream>
 
 
-std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenHeight_) 
+std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenHeight_, bool isOrtho) 
 {
+
     std::vector<Sphere*> sphereList;
     std::vector<Triangle*> triangleList;
     std::vector<Light*> lightList;
+
     std::vector<std::vector<glm::uvec3>>* render = new std::vector<std::vector<glm::uvec3>>(screenWidth_, std::vector<glm::uvec3>(screenHeight_));
     Camera* cam = new Camera(screenWidth_, screenHeight_);
 
+    //
     //Materials
+    Material* white = new Material();
+
     Material* red = new Material();
     red->diffuseColor = rgbToFloat(glm::uvec3(255, 0, 0));
     red->ambientColor = rgbToFloat(glm::uvec3(255, 0, 0));
+    red->diffuseIntensity = 0.3f;
+    red->specularIntensity = 0.7f;
 
     Material* green = new Material();
     green->diffuseColor = rgbToFloat(glm::uvec3(0, 255, 0));
@@ -33,145 +40,111 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
     magenta->diffuseIntensity = 0.2f;
     magenta->specularIntensity = 0.8f;
 
-    Material* white = new Material();
-    //white->diffuseIntensity = 0.2f;
-    //white->specularIntensity = 0.8f;
+    Material* orange = new Material();
+    orange->diffuseColor = rgbToFloat(glm::uvec3(255, 70, 0));
+    orange->ambientColor = rgbToFloat(glm::uvec3(255, 70, 0));
+    orange->diffuseIntensity = 0.5f;
+    orange->specularIntensity = 0.5f;
+
+    Material* teal = new Material();
+    teal->diffuseColor = rgbToFloat(glm::uvec3(51, 204, 204));
+    teal->ambientColor = rgbToFloat(glm::uvec3(51, 204, 204));
+    teal->diffuseIntensity = 0.5f;
+    teal->specularIntensity = 0.5f;
+
+    Material* glossy = new Material();
+    glossy->diffuseColor = rgbToFloat(glm::uvec3(255, 255, 255));
+    glossy->ambientColor = rgbToFloat(glm::uvec3(255, 255, 255));
+    glossy->diffuseIntensity = 0.0f;
+    glossy->specularIntensity = 1.0f;
+    glossy->metallicFactor = 1.0f;
 
 
+    //
     //Pyramid Points
-    glm::vec3 aVertex = glm::vec3(-1.0f, 1.0f, 1.0f);
-    glm::vec3 bVertex = glm::vec3(1.0f, 1.0f, 1.0f);
-    glm::vec3 cVertex = glm::vec3(1.0f, 1.0f, -1.0f);
-    glm::vec3 dVertex = glm::vec3(-1.0f, 1.0f, -1.0f);
-    glm::vec3 eVertex = glm::vec3(0.0f, 3.0f, 0.0f);
+    glm::vec3 aVertex = glm::vec3(-1.0f, 2.0f, 1.0f);
+    glm::vec3 bVertex = glm::vec3(1.0f, 2.0f, 1.0f);
+    glm::vec3 cVertex = glm::vec3(1.0f, 2.0f, -1.0f);
+    glm::vec3 dVertex = glm::vec3(-1.0f, 2.0f, -1.0f);
+    glm::vec3 eVertex = glm::vec3(0.0f, 5.0f, 0.0f);
 
+    //
     //Plane Points
-    float scale = 1.0f; 
+    float scale = 10.0f; 
     glm::vec3 oneVertex = (glm::vec3(-5.0f, 0.0f, -5.0f) *  scale);
     glm::vec3 twoVertex = (glm::vec3(-5.0f, 0.0f, 5.0f) * scale);
     glm::vec3 threeVertex = (glm::vec3(5.0f, 0.0f, 5.0f) * scale);
     glm::vec3 fourVertex = (glm::vec3(5.0f, 0.0f, -5.0f) * scale);
 
-    Sphere* redSphere;
-    Sphere* greenSphere;
-    Sphere* blueSphere;
-    Sphere* whiteSphere;
-    Sphere* newSphere;
-    Sphere* tempSphere;
+    //Spheres
+    Sphere* sphere;
 
-    //Spheres for Triangle1
-    redSphere = new Sphere(red);
-    redSphere->position = aVertex;
-    redSphere->radius = 0.1f;
-    sphereList.push_back(redSphere);
+    //Sphere - Glossy
+    sphere = new Sphere(glossy);
+    sphere->position = glm::vec3(-5.0, 2.0, 0.0);
+    sphere->radius = 2.0f;
+    sphereList.push_back(sphere);
 
-    greenSphere = new Sphere(green);
-    greenSphere->position = bVertex;
-    greenSphere->radius = 0.1f;
-    sphereList.push_back(greenSphere);
-
-    blueSphere = new Sphere(blue);
-    blueSphere->position = cVertex;
-    blueSphere->radius = 0.1f;
-    sphereList.push_back(blueSphere);
-
-    tempSphere = new Sphere(white);
-    tempSphere->position = dVertex;
-    tempSphere->radius = 0.1f;
-    sphereList.push_back(tempSphere);
-
-    tempSphere = new Sphere(magenta);
-    tempSphere->position = eVertex;
-    tempSphere->radius = 0.1f;
-    sphereList.push_back(tempSphere);
-
-    whiteSphere = new Sphere(white);
-    whiteSphere->position = glm::vec3(0.0, 4.5, -5.0);
-    whiteSphere->radius = 1.0f;
-    sphereList.push_back(whiteSphere);
-
-    whiteSphere = new Sphere(white);
-    whiteSphere->position = glm::vec3(0.0, 7.0, -7.0);
-    whiteSphere->radius = 0.6f;
-    sphereList.push_back(whiteSphere);
-
-    newSphere = new Sphere(white);
-    newSphere->position = glm::vec3(0.0, 0.0, 0.0);
-    newSphere->radius = 0.5f;
-    sphereList.push_back(newSphere);
+    //Sphere - Diffuse
+    sphere = new Sphere(red);
+    sphere->position = glm::vec3(5.0, 2.0, 3.0);
+    sphere->radius = 1.0f;
+    sphereList.push_back(sphere);
 
     //
-    //Spheres for Triangle2
-    redSphere = new Sphere(red);
-    redSphere->position = oneVertex;
-    redSphere->radius = 0.1f;
-    //redSphere->baseColor = glm::uvec3(255, 0, 0);
-    sphereList.push_back(redSphere);
+    //Lights
 
-    greenSphere = new Sphere(green);
-    greenSphere->position = threeVertex;
-    greenSphere->radius = 0.1f;
-    //greenSphere->baseColor = glm::uvec3(0, 255, 0);
-    sphereList.push_back(greenSphere);
-
-    blueSphere = new Sphere(blue);
-    blueSphere->position = twoVertex;
-    blueSphere->radius = 0.1f;
-    //blueSphere->baseColor = glm::uvec3(0, 0, 255);
-    sphereList.push_back(blueSphere);
-
-    blueSphere = new Sphere(white);
-    blueSphere->position = fourVertex;
-    blueSphere->radius = 0.1f;
-    //blueSphere->baseColor = glm::uvec3(0, 0, 255);
-    sphereList.push_back(blueSphere);
-
-    //Light
+    //Directional - Straight Down
     Light* light = new Light();
-    light->strength = 1.0f;
-    light->lightRotate(glm::vec3(glm::radians(200.0f), glm::radians(45.0f), glm::radians(0.0f)));
+    light->strength = 0.7f;
+    light->lightRotate(glm::vec3(glm::radians(180.0f), glm::radians(90.0f), glm::radians(0.0f)));
     lightList.push_back(light);
 
-    
+    //Point1
     light = new Light();
-    light->strength = 1.0f;
-    light->position = glm::vec3(2.0f, 2.0f, -2.0f);
-    light->baseColor = glm::vec3(1.0f, 0.0, 0.0f);
+    light->strength = 5.0f;
+    light->position = glm::vec3(-2.5f, 4.0f, -5.0f);
+    light->baseColor = glm::vec3(1.0f, 0.0f, 0.0f);
     light->isPoint = true;
     lightList.push_back(light);
     
+    //Point 2
     light = new Light();
-    light->strength = 3.0f;
-    light->position = glm::vec3(-3.0f, 3.0f, 2.0f);
-    light->baseColor = glm::vec3(0.0f, 0.0, 1.0f);
-    light->isPoint = true;
-    lightList.push_back(light);
-
-    light = new Light();
-    light->strength = 1.0f;
-    light->position = glm::vec3(4.0f, 4.0f, 0.0f);
+    light->strength = 5.0f;
+    light->position = glm::vec3(2.5f, 4.0f, -5.0f);
     light->baseColor = glm::vec3(0.0f, 1.0, 0.0f);
     light->isPoint = true;
     lightList.push_back(light);
 
-    //Triangle
-    Triangle* triangle = new Triangle(aVertex, bVertex, cVertex, white);
-    //triangleList.push_back(triangle);
+    //Point 3
+    light = new Light();
+    light->strength = 5.0f;
+    light->position = glm::vec3(0.0f, 4.0f, 5.0f);
+    light->baseColor = glm::vec3(0.0f, 0.0, 1.0f);
+    light->isPoint = true;
+    lightList.push_back(light);
 
-    //Plane
+    //
+    //Triangle
+    Triangle* triangle;
+
+    //Plane Triangles
     Object* plane = new Object(white);
+
     triangle = new Triangle(threeVertex, twoVertex, oneVertex, plane->material);
     plane->triangles.push_back(triangle);
     triangleList.push_back(triangle);
+
     triangle = new Triangle(oneVertex, fourVertex, threeVertex, plane->material);
     plane->triangles.push_back(triangle);
     triangleList.push_back(triangle);
 
-    //Tetrahedron
+    /*
+    //Tetrahedron Triangles
     triangle = new Triangle(aVertex, bVertex, eVertex, blue);
     triangleList.push_back(triangle);
 
-    triangle = new Triangle(bVertex, cVertex, eVertex, blue);
+    triangle = new Triangle(eVertex, cVertex, bVertex, blue);
     triangleList.push_back(triangle);
 
     triangle = new Triangle(cVertex, dVertex, eVertex, blue);
@@ -179,37 +152,38 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
 
     triangle = new Triangle(dVertex, aVertex, eVertex, blue);
     triangleList.push_back(triangle);
-
-
-    //std::cout << "SIZE " << triangleList.size() << std::endl;
-
+    */
+    //
     //Camera
-    glm::vec3 camPosition = glm::vec3(0.0f, 3.0f, 15.0f);
+
+    glm::vec3 camPosition = glm::vec3(10.0f, 3.0f, 10.0f);
     cam->camPos = glm::vec3(camPosition.x, camPosition.y, camPosition.z);
-    //(L-R, )
-    glm::vec3 camRotation = glm::vec3(180.0f, 0.0f, -90.0f);
+
+    //(L-R)
+    glm::vec3 camRotation = glm::vec3(135.0f, -5.0f, -85.0f);
     cam->camRotate(camRotation.x, camRotation.y, camRotation.z);
-    cam->isPerspective = true;
+
+    cam->isPerspective = !isOrtho;
     cam->perspectiveDistance = 5.0f;
-    //cam->orthoScale = 10.0f;
     
-    //Camera Orbit
-    int frames = 5;
+    //Camera Animation
+    //int frames = 5;
+    //float orbitRadius = 10.0f;
+    //float orbitSpeed = glm::radians(360.0f) / frames;
 
-    float orbitRadius = 10.0f;
-    float orbitSpeed = glm::radians(360.0f) / frames;
+    //
+    //Additional Settings
 
+    //Reflection Depth
+    int lightBounces = 2;
+
+    //Infinite Plane Specification
+    float planeDepth = -1.0f; 
+
+    //Seq is how many rendered frames
     for (int seq = 0; seq < 5; seq++)
     {
-        float angle = seq * orbitSpeed;
-        float newX = orbitRadius * glm::cos(angle);
-        float newZ = orbitRadius * glm::sin(angle);
-        camPosition.x = newX;
-        camPosition.z = newZ;
-        std::cout << "X: " << camPosition.x << " Y: " << camPosition.y << " Z: " << camPosition.z << std::endl;
-        std::cout << "X: " << camRotation.x << " Y: " << camRotation.y << " Z: " << camRotation.z << std::endl;
-        cam->camPos = glm::vec3(camPosition.x, camPosition.y, camPosition.z);
-        //camRotation.x -= 5.0f;
+        //std::cout << "READY TO RENDER!" << std::endl;
         //Output TGA
         ImageFile* imageFile = new ImageFile(screenWidth_, screenHeight_);
         float t1 = 0.0f;
@@ -222,39 +196,52 @@ std::vector<std::vector<glm::uvec3>>& renderOutput(int screenWidth_, int screenH
                 (*render)[i][j] = glm::uvec3(20, 50, 50);
                 Ray* curRay = cam->getRay(i, j);
                 imageFile->addPixel(i, j, 20, 50, 50);
-
+                glm::vec3 intersectionPoint = glm::vec3(0.0f);
+                //if (curRay->rayPlaneIntersection(planeDepth, intersectionPoint, t0, t1, t2))
+                //{
+                    //glm::vec3 result = white->shaderPixel(glm::vec3(0.0f, 1.0f, 0.0f), lightList, curRay->direction, lightBounces, intersectionPoint, triangleList, sphereList);
+                    //(*render)[i][j] = result;
+                    //imageFile->addPixel(i, j, result.x, result.y, result.z);
+               // }
+                
+                //Triangle Loop
+                
                 for (int tri = 0; tri < triangleList.size(); tri++)
                 {
-                    glm::vec3 intersectionPoint;
+                    intersectionPoint = glm::vec3(0.0f);
                     if (curRay->rayTriangleIntersection(triangleList[tri], intersectionPoint, t0, t1, t2))
                     {
-                        glm::vec3 result = triangleList[tri]->material->shaderPixel(-triangleList[tri]->surfaceNormal(), lightList, curRay->direction, intersectionPoint, triangleList, sphereList);
+                        glm::vec3 result = triangleList[tri]->material->shaderPixel(-triangleList[tri]->surfaceNormal(), lightList, curRay, lightBounces, intersectionPoint, triangleList, sphereList);
                         (*render)[i][j] = result;
                         imageFile->addPixel(i, j, result.x, result.y, result.z);
                     }
                 }
+                
 
+                //Sphere Loop
                 for (int obj = 0; obj < sphereList.size(); obj++)
                 {
-                    glm::vec3 intersectionPoint;
+                    intersectionPoint = glm::vec3(0.0f);
                     if (curRay->raySphereIntersection(sphereList[obj], intersectionPoint, t0, t1, t2))
                     {
-                        glm::uvec3 result = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), lightList, curRay->direction, intersectionPoint, triangleList, sphereList);
+                        glm::uvec3 result = sphereList[obj]->material->shaderPixel(sphereList[obj]->surfaceNormal(intersectionPoint), lightList, curRay, lightBounces, intersectionPoint, triangleList, sphereList);
                         (*render)[i][j] = result;
                         imageFile->addPixel(i, j, result.x, result.y, result.z);
                     }
                 }
             }
         }
-        imageFile->fileName = "../output/" + std::to_string(seq) + ".tga";
+        imageFile->fileName = "../output/" + std::to_string(seq+1) + ".tga";
         imageFile->fileWrite();
         std::cout << imageFile->fileName << ": FILE WRITTEN" << std::endl;
+        //std::cout << imageFile->fileName << ": FILE WRITTEN" << std::endl;
+
         //Basic Animation
 
-        //camPosition = glm::vec3(0.0f, 5.0f, 15.0f);
-        //cam->camPos = glm::vec3(camPosition.x-5.0f, camPosition.y, camPosition.z);
-        //cam->updateViewMatrix(glm::vec3(0.0f));
+        camPosition = glm::vec3(camPosition.x - 0.5f, camPosition.y, camPosition.z - 0.5f);
+        camRotation = glm::vec3(-5.0f, 1.0f, -1.0f);
         cam->camRotate(camRotation.x, camRotation.y, camRotation.z);
+        cam->camPos = glm::vec3(camPosition.x, camPosition.y, camPosition.z);
     }
     return *render;
 };

@@ -105,6 +105,7 @@ struct Material
     float diffuseIntensity;
     float ambientIntensity;
     float specularIntensity;
+    float metallicFactor;
     float phongExponent;
 
     Material()
@@ -115,10 +116,11 @@ struct Material
         diffuseIntensity = 0.5f;
         ambientIntensity = 0.15f;
         specularIntensity = 0.5f;
+        metallicFactor = 0.5f;
         phongExponent = 8.0f;
     }
 
-    glm::uvec3 shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> lights, glm::vec3 camVector, glm::vec3& intersectionPoint, std::vector<Triangle*>& triangles, std::vector<Sphere*>& spheres);
+    glm::uvec3 shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> lights, Ray* camRay, int lightBounces, glm::vec3& intersectionPoint, std::vector<Triangle*>& triangles, std::vector<Sphere*>& spheres);
 };
 
 struct Sphere 
@@ -145,7 +147,7 @@ struct Sphere
     glm::vec3 surfaceNormal(glm::vec3 intersectionPoint)
     {
         //return (intersectionPoint - this->position) / this->radius;
-        return 2.0f * (intersectionPoint - this->position);
+        return glm::normalize(intersectionPoint - this->position);
     }
 };
 
@@ -197,30 +199,48 @@ struct Ray
     {
         scalar = scalar_;
     }  
+
+    bool rayPlaneIntersection(float depth, glm::vec3& intersectPoint, float& t0, float tMin, float tMax)
+    {
+        glm::vec3 planeCenter(0.0f, 0.0f, 0.0f);
+        glm::vec3 planeNormal(0.0f, 1.0f, 0.0f);
+        float t = -1.0f;
+        float denom = glm::dot(planeNormal, this->direction);
+        if (abs(denom) > 1e-6)
+        {
+            t = glm::dot(planeCenter - this->origin, planeNormal) / denom;
+        }
+
+        if ((t >= tMin) && (t <= tMax))
+        {
+            intersectPoint = this->origin + t * this->direction;
+            //std::cout << "X: " << intersectPoint.x << " Y: " << intersectPoint.y << " Z: " << intersectPoint.z << std::endl;
+            t0 = t;
+            return true;
+        }
+        return false;
+    }
+
     bool raySphereIntersection(Sphere* sphere, glm::vec3& intersectPoint, float& t0, float tMin, float tMax)
     {
         glm::vec3 originAndCenter = sphere->position - this->origin;
         bool sphereIntersection = false;
-        float b = (glm::dot(this->direction, originAndCenter));
+        float b = 2.0f *(glm::dot(this->direction, originAndCenter));
         float a = (glm::dot(this->direction, this->direction));
         float c = (glm::dot(originAndCenter, originAndCenter)) - std::pow(sphere->radius, 2);
-        float discriminant = (std::pow(b, 2) - a*c);
+        float discriminant = (std::pow(b, 2) - (4 * a * c));
         if (discriminant > 0.0)
         {
-            float t1 = ((-b) + std::sqrt(discriminant)) / a;
-            float t2 = ((-b) - std::sqrt(discriminant)) / a;
+            float t1 = ((-b) + std::sqrt(discriminant)) / (2.0f *a);
+            float t2 = ((-b) - std::sqrt(discriminant)) / (2.0f *a);
             float t = ((t1 < t2) ? t1 : t2);
-            //std::cout << t << std::endl;
-            if ((t > t0) || t < tMin)
+            if ((t >= tMin) && (t <= tMax))
             {
-                return false;
-            }
-            else
-            {
-                t0 = std::abs(t);
+                t0 = t;
                 intersectPoint = this->origin + -t * this->direction;
                 return true;
             }
+            return false;
         }
         return false;
     }
@@ -292,7 +312,7 @@ struct Ray
 };
 
 //Material Shader
-glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> lights, glm::vec3 camVector, glm::vec3& intersectionPoint, std::vector<Triangle*>& triangles, std::vector<Sphere*>& spheres)
+glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> lights, Ray* camRay, int lightBounces, glm::vec3& intersectionPoint, std::vector<Triangle*>& triangles, std::vector<Sphere*>& spheres)
 {
     surfaceNormal = glm::normalize(surfaceNormal);
     //Ambient
@@ -303,12 +323,17 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
     glm::vec3 lightSpecular = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 lightDiffuse = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 lightVector;
+    float t0 = 1000.0f;
+    float t1 = 0.01f;
+    float t2 = 1000.0f;
 
     for (int i = 0; i < lights.size(); i++)
     {
+        float r = 1.0f;
         if (lights[i]->isPoint)
         {
             lightVector = lights[i]->getDirection(intersectionPoint);
+            r = glm::distance(lights[i]->position, intersectionPoint);
         }
         else
         {
@@ -316,7 +341,7 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
         }
 
         //Diffuse
-        float diffuseMultipliers = (diffuseIntensity) * (lights[i]->strength) * glm::max(0.0f, (glm::dot(surfaceNormal, lightVector)));
+        float diffuseMultipliers = (diffuseIntensity) * (lights[i]->strength / (r*r)) * glm::max(0.0f, (glm::dot(surfaceNormal, lightVector)));
         glm::uvec3 diffuseVectors = 
         (
             (glm::uvec3(diffuseColor.x, diffuseColor.y, diffuseColor.z)
@@ -325,11 +350,11 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
         );
 
         //Specular
-        glm::vec3 eyeVector = glm::normalize(-camVector);
+        glm::vec3 eyeVector = glm::normalize(camRay->direction);
         glm::vec3 eyePlusLight = (eyeVector + lightVector);
         glm::vec3 hVector = glm::normalize(eyePlusLight / glm::length(eyePlusLight));
 
-        float specularMultipliers = (specularIntensity) * (lights[i]->strength) * std::pow(glm::max(0.0f, (glm::dot(surfaceNormal, hVector))), phongExponent);
+        float specularMultipliers = (specularIntensity) * (lights[i]->strength / (r*r)) * std::pow(glm::max(0.0f, (glm::dot(surfaceNormal, hVector))), phongExponent);
 
         glm::uvec3 specularVectors = 
         (
@@ -338,20 +363,17 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
             glm::uvec3(lights[i]->baseColor.x, lights[i]->baseColor.y, lights[i]->baseColor.z))
         );  
         
-        Ray* shadowRay = new Ray(1.0f);
+        Ray* shadowRay = new Ray(1000.0f);
         shadowRay->origin = intersectionPoint;
         shadowRay->direction = -lightVector;
         glm::vec3 dummyIntersect = glm::vec3(0.0f, 0.0f, 0.0f);
-        float t0 = 1000.0f;
-        float t1 = 0.01f;
-        float t2 = 1000.0f;
         bool isBlocked = false;
         
         for (int count = 0; count < triangles.size(); count++)
         {
             if (shadowRay->rayTriangleIntersection(triangles[count], dummyIntersect, t0, t1, t2))
             {
-                isBlocked = true;
+                //isBlocked = true;
                 break;
             }
         }
@@ -381,8 +403,35 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
         }
     }
 
-    
-    glm::vec3 finalColor = (lightDiffuse + lightAmbient + lightSpecular); // + glm::vec3(this->shaderPixel(surfaceNormal, lights, camVector, intersectionPoint, triangles, spheres));
+    glm::vec3 finalColor = (lightDiffuse + lightAmbient + lightSpecular);
+    Ray* tempRay = new Ray(1000.0f);
+    tempRay->origin = intersectionPoint;
+    tempRay->direction = glm::reflect(camRay->direction, surfaceNormal);
+    glm::vec3 newIntersection;
+
+    if (lightBounces > 0)
+    {
+        for (int count = 0; count < spheres.size(); count++)
+        {
+            if (tempRay->raySphereIntersection(spheres[count], newIntersection, t0, t1, t2))
+            {   
+                //std::cout << "SPHERE HIT" << std::endl;
+                glm::vec3 reflection = rgbToFloat((this->shaderPixel(spheres[count]->surfaceNormal(newIntersection), lights, tempRay, lightBounces - 1, newIntersection, triangles, spheres)));
+                finalColor += (metallicFactor * reflection * spheres[count]->material->diffuseColor);
+                //std::cout << reflection.x << " " << reflection.y << " " << reflection.z << std::endl;
+            }
+        }
+
+        for (int count = 0; count < triangles.size(); count++)
+        {
+            if (tempRay->rayTriangleIntersection(triangles[count], newIntersection, t0, t1, t2))
+            {
+                glm::vec3 reflection = rgbToFloat((this->shaderPixel(triangles[count]->surfaceNormal(), lights, tempRay, lightBounces - 1, newIntersection, triangles, spheres)));
+                finalColor += (metallicFactor * reflection * triangles[count]->material->diffuseColor);
+            }
+        }
+    }
+    delete tempRay;
     
     glm::vec3 clampedEmission 
     (

@@ -9,6 +9,7 @@
 
 void framebuffer_size_callback(GLFWwindow * window, int width, int height);
 void processInput(GLFWwindow* window);
+unsigned char* renderImage(bool isOrtho);
 
 // settings
 const unsigned int SCR_WIDTH = 1024;
@@ -38,15 +39,13 @@ const char* fragmentShaderSource = "#version 330 core\n"
 "   FragColor = texture(texture1, TexCoord);\n"
 "}\n\0";
 
+bool isOrtho = false;
+const int width = 512;
+const int height = 512;
+unsigned char* image;
 
 int main()
 {
-    const int width = 512; // keep it in powers of 2!
-    const int height = 512; // keep it in powers of 2!
-    unsigned char image[width * height * 3];
-    std::vector<std::vector<glm::uvec3>>& output = renderOutput(width, height);
-
-    /*
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -163,30 +162,9 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    // Create the image (RGB Array) to be displayed
-    const int width = 512; // keep it in powers of 2!
-    const int height = 512; // keep it in powers of 2!
-    unsigned char image[width * height * 3];
-    std::vector<std::vector<glm::uvec3>>& output = renderOutput(width, height);
-    for (int i = 0; i < height; i++)
-    {
-        for (int j = 0; j < width; j++)
-        {
-            int idx = (i * width + j) * 3;
-            unsigned int r = output.at(i).at(j).x;
-            //std::cout << r << " ";
-            unsigned int g = output.at(i).at(j).y;
-            //std::cout << g << " ";
-            unsigned int b = output.at(i).at(j).z;
-            //std::cout << b << std::endl;
-            //image[idx] = (unsigned char)(r * i * j / height / width); //((i+j) % 2) * 255;
-            //image[idx + 1] = (unsigned char)(g * i * j / height / width);
-            //image[idx + 2] = b;
-            image[idx] = (unsigned char)(r); //((i+j) % 2) * 255;
-            image[idx + 1] = (unsigned char)(g);
-            image[idx + 2] = b;
-        }
-    }
+    // Create the image (RGB Array) to be displayed+
+    std::cout << "ABOUT TO RENDER!" << std::endl;
+    image = renderImage(isOrtho);
 
     unsigned char* data = &image[0];
     if (data)
@@ -234,7 +212,7 @@ int main()
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
-    */
+    
     return 0;
 }
 
@@ -242,8 +220,23 @@ int main()
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }    
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS){
+        isOrtho = !isOrtho;
+        image = renderImage(isOrtho);
+        unsigned char* data = &image[0];
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
+        else
+        {
+            std::cout << "Failed to load texture" << std::endl;
+        }
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -253,4 +246,25 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+}
+
+unsigned char* renderImage(bool isOrtho)
+{
+    std::cout << "RENDERED!" << std::endl;
+    std::vector<std::vector<glm::uvec3>>& output = renderOutput(width, height, isOrtho);
+    unsigned char* image_ = new unsigned char[width * height * 3];
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            int idx = (i * width + j) * 3;
+            unsigned int r = output.at(i).at(j).x;
+            unsigned int g = output.at(i).at(j).y;
+            unsigned int b = output.at(i).at(j).z;
+            image_[idx] = (unsigned char)(r);
+            image_[idx + 1] = (unsigned char)(g);
+            image_[idx + 2] = b;
+        }
+    }
+    return image_;
 }
