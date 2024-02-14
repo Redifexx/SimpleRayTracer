@@ -253,7 +253,7 @@ struct Ray
             float t1 = ((-b) + std::sqrt(discriminant)) / (2.0f *a);
             float t2 = ((-b) - std::sqrt(discriminant)) / (2.0f *a);
             float t = ((t1 < t2) ? t1 : t2);
-            if ((t >= tMin) && (t <= tMax))
+            if ((t >= tMin) && (t <= tMax) && (t <= t0))
             {
                 t0 = t;
                 intersectPoint = this->origin + -t * this->direction;
@@ -302,10 +302,11 @@ struct Ray
         {
             return false;
         }
-        if (t < t0)
+        if (t > t0)
         {
-            t0 = t;
+            return false;
         } 
+        t0 = t;
 
 
         float areaQBC = glm::length(glm::cross(cVert - bVert, tempIntersection - bVert)) / 2.0f;
@@ -323,64 +324,6 @@ struct Ray
 
         intersectPoint = tempIntersection;
         return true;
-
-        /*
-        //A - B Vertex
-        float a = (aVert.x - bVert.x);
-        float b = (aVert.y - bVert.y);
-        float c = (aVert.z - bVert.z);
-
-        //A - C Vertex
-        float d = (aVert.x - cVert.x);
-        float e = (aVert.y - cVert.y);
-        float f = (aVert.z - cVert.z);
-
-        //Direction Vector
-        float g = (this->direction.x);
-        float h = (this->direction.y);
-        float i = (this->direction.z);
-
-        //A - EyeOrigin
-        float j = (aVert.x - this->origin.x);
-        float k = (aVert.y - this->origin.y);
-        float l = (aVert.z - this->origin.z);
-
-        //Common Numbers
-        float EIHF = (e * i) - (h * f);
-        float GFDI = (g * f) - (d * i);
-        float DHEG = (d * h) - (e * g);
-        float AKJB = (a * k) - (j * b);
-        float JCAL = (j * c) - (a * l);
-        float BLKC = (b * l) - (k * c);
-        float Mu = (a * (EIHF)) + (b * (GFDI)) + (c * (DHEG));
-
-        float Gamma = ((i * (AKJB)) + (h * (JCAL)) + (j * (BLKC))) / Mu;
-        float Beta = ((j * (EIHF)) + (k * (GFDI)) + (l * (DHEG))) / Mu;
-        float t = ((f * (AKJB)) + (e * (JCAL)) + (d * (BLKC))) / Mu;
-        if ((t < t1) || (t > t2)) 
-        {
-            return false;
-        }
-        if (t < t0)
-        {
-            t0 = t;
-        } 
-
-        if ((Gamma < 0.0f) || (Gamma > 1.0f)) 
-        {
-            return false;
-        }
-
-        if ((Beta < 0.0f) || (Beta > (1.0f - Gamma)))
-        {
-            return false;
-        }
-        
-
-        intersectPoint = aVert + Beta * (bVert - aVert) + Gamma * (cVert - aVert);
-
-        return true;
-        */
     }
 
 };
@@ -493,7 +436,7 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
             {   
                 //std::cout << "SPHERE HIT" << std::endl;
                 glm::vec3 reflection = rgbToFloat((this->shaderPixel(spheres[count]->surfaceNormal(newIntersection), lights, tempRay, lightBounces - 1, newIntersection, triangles, spheres)));
-                finalColor += (metallicFactor * reflection * spheres[count]->material->diffuseColor);
+                finalColor += ((metallicFactor) * reflection * ((spheres[count]->material->diffuseColor * spheres[count]->material->diffuseIntensity) + (spheres[count]->material->ambientColor * spheres[count]->material->ambientIntensity)));
                 //std::cout << reflection.x << " " << reflection.y << " " << reflection.z << std::endl;
             }
         }
@@ -502,8 +445,8 @@ glm::uvec3 Material::shaderPixel(glm::vec3 surfaceNormal, std::vector<Light*> li
         {
             if (tempRay->rayTriangleIntersection(triangles[count], newIntersection, t0, t1, t2, alpha, beta, gamma))
             {
-                glm::vec3 reflection = rgbToFloat((this->shaderPixel(triangles[count]->weightedNormal(alpha, beta, gamma), lights, tempRay, lightBounces - 1, newIntersection, triangles, spheres)));
-                finalColor += (metallicFactor * reflection * triangles[count]->material->diffuseColor);
+                glm::vec3 reflection = rgbToFloat((this->shaderPixel(-triangles[count]->weightedNormal(alpha, beta, gamma), lights, tempRay, lightBounces - 1, newIntersection, triangles, spheres)));
+                finalColor += ((metallicFactor) * reflection * ((triangles[count]->material->diffuseColor * triangles[count]->material->diffuseIntensity) + (triangles[count]->material->ambientColor * triangles[count]->material->ambientIntensity)));
             }
         }
     }
